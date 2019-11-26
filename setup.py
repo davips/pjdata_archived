@@ -3,7 +3,7 @@ import os
 import setuptools
 import pjdata
 
-NAME = 'paje-data'
+NAME = "paje-data"
 
 
 VERSION = pjdata.__version__
