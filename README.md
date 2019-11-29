@@ -1,5 +1,5 @@
-# paje-data
-Storage for datasets, results and replicability os experiments.
+# data
+Data elements for machine learning.
 
 Install
 -------
