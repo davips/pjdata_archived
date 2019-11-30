@@ -1,4 +1,4 @@
-# data
+# paje-data
 Data elements for machine learning.
 
 Install
