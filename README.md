@@ -1,2 +1,2 @@
 # paje-data
-Storage for datasets and results
+Package for Data and related classes for data science (Pajé, Oka, ...).

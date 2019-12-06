@@ -15,7 +15,7 @@ AUTHOR = 'Davi Pereira dos Santos'
 AUTHOR_EMAIL = ''
 
 
-DESCRIPTION = 'Pajé Data'
+DESCRIPTION = 'Package for Data and related classes for data science (Pajé, Oka, ...)'
 
 
 with open('README.md', 'r') as fh:
@@ -44,7 +44,7 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
 
 
 INSTALL_REQUIRES = [
-    'zstd', 'lz4', 'liac-arff'
+    'zstd', 'lz4', 'liac-arff', 'pandas', 'sklearn'
 ]
 
 
