@@ -44,7 +44,7 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
 
 
 INSTALL_REQUIRES = [
-    'zstd', 'lz4', 'liac-arff', 'pandas', 'sklearn'
+    'liac-arff', 'pandas', 'sklearn'
 ]
 
 
