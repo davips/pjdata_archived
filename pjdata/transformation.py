@@ -12,4 +12,4 @@ class Transformation(Identifyable):
         self.operation = operation
 
     def _uuid_impl(self):
-        return self.transformer.uuid(), self.operation
+        return self.transformer.uuid, self.operation
