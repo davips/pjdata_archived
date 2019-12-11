@@ -13,3 +13,6 @@ class Transformation(Identifyable):
 
     def _uuid_impl(self):
         return self.transformer.uuid, self.operation
+
+    def __str__(self):
+        return str(self.transformer) + '->' + self.operation
