@@ -19,15 +19,15 @@ test-cov: ## Execute the code test using pytest and measuring the coverage.
 	pytest --cov=pymfe/ tests/
 
 code-check: ## Execute the code check with flake8, pylint, mypy.
-	flake8 pymfe
-	pylint pymfe -d 'C0103, R0913, R0902, R0914, C0302, R0904, R0801, E1101'
-	mypy pymfe --ignore-missing-imports
+	flake8 pjdata
+	pylint pjdata -d 'C0103, R0913, R0902, R0914, C0302, R0904, R0801, E1101'
+	mypy pjdata --ignore-missing-imports
 
-pypi: clean ## Send pymfe to pypi.
+pypi: clean ## Send pjdata to pypi.
 	python3 setup.py sdist bdist_wheel
 	twine upload dist/*
 
-install-dev: ## Install pymfe for developers using pip.
+install-dev: ## Install pjdata for developers using pip.
 	pip install -e .
 	pip install -U -r requirements.txt
 	pip install -U -r requirements-dev.txt
