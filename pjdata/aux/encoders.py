@@ -43,7 +43,7 @@ def dec(digest, alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     return res
 
 
-def enc(big, alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+def enc(big_number, alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
                       'abcdefghijklmnopqrstuvwxyz'
                       'ÁÂÄÅÆÉÊËÍÎÏÐÑÓÔÖÚÛÜÝÞßáâäåæçéêëíîïðñóôöøúûüýþ'):
     """
@@ -102,14 +102,14 @@ def enc(big, alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 ÁÂÄÅÆÉÊËÍÎÏÐÑÓÔÖÚÛÜÝÞßáâäåæçéêëíîïðñóôöøúûüýþ
 
     :param alphabet: string with allowed digits
-    :param big: an integer, usually a big MD5-like one
+    :param big_number: an integer, usually a big MD5-like one
     :return: string representing a base-107 number (or any other base,
     depending on the given alphabet length)"""
     l = len(alphabet)
     res = []
     while True:
-        res.append(alphabet[big % l])
-        big = big // l
-        if big == 0:
+        res.append(alphabet[big_number % l])
+        big_number = big_number // l
+        if big_number == 0:
             break
     return ''.join(res)[::-1]
