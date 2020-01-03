@@ -150,7 +150,8 @@ class PhantomData(Data):
 
 class NoData(type):
     dataset = NoDataset
-    uuid = 'd' + int2tiny(0)
+    uuid = 'D' + int2tiny(0)
+    failure = None
 
     def __new__(cls, *args, **kwargs):
         raise Exception('NoData is a singleton and shouldn\'t be instantiated')
