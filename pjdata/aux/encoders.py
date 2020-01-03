@@ -17,12 +17,26 @@ def uuid(content, prefix='Ø'):
 
 def tiny_md5(hexdigest):
     """
-    Converts hex MD5 representation (32 digits in base-16) to a friendly
+    Convert hex MD5 representation (32 digits in base-16) to a friendly
     shorter one (19 digits in base-113).
     :param hexdigest:
     :return: string with 19 digits, padded with 'Ø' when needed
     """
-    return enc(int(hexdigest, 16)).rjust(19, 'Ø')
+    return int2tiny(hex2int(hexdigest))
+
+
+def int2tiny(number):
+    """Convert number to tiny string (19 chars)."""
+    return enc(number).rjust(19, 'Ø')
+
+
+def hex2int(hexdigest):
+    """
+    Convert hex MD5 representation (32 digits in base-16) to int.
+    :param hexdigest:
+    :return: int
+    """
+    return int(hexdigest, 16)
 
 
 def dec(digest, alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -44,8 +58,8 @@ def dec(digest, alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 
 def enc(big_number, alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-                      'abcdefghijklmnopqrstuvwxyz'
-                      'ÁÂÄÅÆÉÊËÍÎÏÐÑÓÔÖÚÛÜÝÞßáâäåæçéêëíîïðñóôöøúûüýþ'):
+                             'abcdefghijklmnopqrstuvwxyz'
+                             'ÁÂÄÅÆÉÊËÍÎÏÐÑÓÔÖÚÛÜÝÞßáâäåæçéêëíîïðñóôöøúûüýþ'):
     """
     Encode an integer to base-n. n = len(alphabet).
     The default is base107 since it is enough to represent MD5 as 19 chars.
