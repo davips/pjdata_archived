@@ -5,7 +5,7 @@ from pjdata.data import Data
 import numpy as np
 
 # Testes            ############################
-dataset = Dataset('iris', 'Beautiful description.',
+dataset = Dataset('flowers', 'Beautiful description.',
                   X={'length': 'R', 'width': 'R'}, Y={'class': ['M', 'F']})
 data = Data(dataset, X=np.asarray([1, 2, 3, 4, 5, 6, 7, 8]),
             Y=np.asarray([1, 2, 3, 4]))
@@ -14,18 +14,18 @@ data = Data(dataset, X=np.asarray([1, 2, 3, 4, 5, 6, 7, 8]),
 print('Storing Data object...')
 test = PickleServer()
 try:
-    test.store(data, ['X', 'Y'])
+    test.store(data, fields=['X', 'Y'])
     print('ok!')
 except DuplicateEntryException:
     print('Duplicate! Ignored.')
 
-test.fetch(data, ['X', 'Y'])
+test.fetch(data, fields=['X', 'Y'])
 
 # Teste de leitura ############################
 print('Getting Data information-only objects...')
-lista = test.list_by_name('ir')
+lista = test.list_by_name('flo')
 print([d.dataset.name for d in lista])
 
 print('Getting a complete Data object...')
-data = test.fetch(lista[0], ['X', 'Y'])
+data = test.fetch(lista[0], fields=['X', 'Y'])
 print(data.X)

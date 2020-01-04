@@ -31,3 +31,6 @@ class NoDataset(type):
     def __new__(cls, *args, **kwargs):
         raise Exception(
             'NoDataset is a singleton and shouldn\'t be instantiated')
+
+    def __bool__(self):
+        return False

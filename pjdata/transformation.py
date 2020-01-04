@@ -39,3 +39,6 @@ class NoTransformation(type):
     def __new__(cls, *args, **kwargs):
         raise Exception(
             'NoTransformation is a singleton and shouldn\'t be instantiated')
+
+    def __bool__(self):
+        return False
