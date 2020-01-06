@@ -10,8 +10,8 @@ def uuid(content, prefix='Ø'):
     :param prefix: adds a (preferably single character) prefix to the output
     :return: prefix + <19 characters>
     """
-    if content is None:
-        return None
+    # if content is None:
+    #     return None
     return prefix + tiny_md5(hashlib.md5(content).hexdigest())
 
 
