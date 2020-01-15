@@ -37,6 +37,7 @@ class Data(Identifyable, LinAlgHelper):
     # Some mappings from vector/scalar to the matrix where it is stored.
     _vec2mat_map = {i: i.upper() for i in ['y', 'z', 'v', 'w']}
     _sca2mat_map = {i: i.upper() for i in ['r', 's', 't']}
+    isphantom = False
 
     def __init__(self, dataset, history=None, failure=None, **matrices):
         if history is None:
@@ -87,9 +88,9 @@ class Data(Identifyable, LinAlgHelper):
             new_name, new_value = self._translate(name, value)
             new_matrices[new_name] = new_value
 
-        return Data(dataset=self.dataset,
-                    history=self.history.extended(transformations),
-                    failure=failure, **new_matrices)
+        return self.__class__(dataset=self.dataset,
+                              history=self.history.extended(transformations),
+                              failure=failure, **new_matrices)
 
     @property
     @lru_cache()
@@ -171,6 +172,8 @@ class Data(Identifyable, LinAlgHelper):
 class PhantomData(Data):
     """Exactly like Data, but without the matrices."""
 
+    isphantom = True
+
     @property
     def consistent_with_dataset(self):
         return True
@@ -182,6 +185,17 @@ class PhantomData(Data):
             return self.__getattribute__(item)
 
 
+class UUIDData(PhantomData):
+    """Exactly like Data, but only with UUID."""
+
+    def __init__(self, uuid):
+        super().__init__(NoDataset)
+        self._uuid = uuid
+
+    def _uuid_impl(self):
+        return 'uuid', self._uuid
+
+
 class NoData(type):
     dataset = NoDataset
     history = History([])
@@ -189,6 +203,7 @@ class NoData(type):
     uuid = 'D' + int2tiny(0)
     sid = uuid[:10]
     failure = None
+    isphantom = False
 
     def updated(self, transformations, failure='keep'):
         nodata = NoData
@@ -204,10 +219,3 @@ class NoData(type):
 
 class MissingField(Exception):
     pass
-
-
-class UUIDData:
-    """Exactly like Data, but only with UUID."""
-
-    def __init__(self, uuid):
-        self.uuid = uuid
