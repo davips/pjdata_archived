@@ -220,6 +220,7 @@ class NoData(type):
     uuid = 'D' + int2tiny(0)
     sid = uuid[:10]
     failure = None
+    phantom = PhantomData(dataset=dataset, history=history, failure=failure)
 
     def updated(self, transformations, failure='keep'):
         nodata = NoData
