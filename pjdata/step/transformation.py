@@ -2,6 +2,7 @@ from abc import ABC
 from functools import lru_cache
 
 from pjdata.aux.identifyable import Identifyable
+from pjdata.aux.serialization import deserialize, serialize
 
 
 class Transformation(Identifyable, ABC):
@@ -48,53 +49,3 @@ class NoTransformation(type):
 
     def __bool__(self):
         return False
-
-# TODO: this code is a duplicate of a file in pjml. Solve it somehow.
-import json
-
-
-def serialize(obj):
-    return json.dumps(obj, sort_keys=True)
-
-
-def deserialize(txt):
-    return _dict_to_transformer(json.loads(txt))
-
-
-def serialized_to_int(txt):
-    import hashlib
-    return int(hashlib.md5(txt.encode()).hexdigest(), 16)
-
-
-def materialize(name, path, config):
-    """Instantiate a transformer.
-
-    Returns
-    -------
-    A ready to use component.
-    """
-    class_ = _get_class(path, name)
-    try:
-        return class_(**config)
-    except Exception as e:
-        print(e)
-        raise Exception(f'Problems materializing {name}@{path} with\n{config}')
-
-
-def _dict_to_transformer(dic):
-    """Convert recursively a dict to a transformer."""
-    if 'id' not in dic:
-        raise Exception(f'Provided dict does not represent a transformer {dic}')
-    name, path = dic['id'].split('@')
-    cfg = dic['config']
-    if 'transformer' in cfg:
-        cfg['transformer'] = _dict_to_transformer(cfg['transformer'])
-
-    return materialize(name, path, cfg)
-
-
-def _get_class(module, class_name):
-    import importlib
-    module = importlib.import_module(module)
-    class_ = getattr(module, class_name)
-    return class_
