@@ -1,5 +1,20 @@
 import hashlib
 
+from json import JSONEncoder, JSONDecoder
+import numpy as np
+
+
+class CustomJSONEncoder(JSONEncoder):
+    def default(self, obj):
+        if obj is not None:
+            if isinstance(obj, np.ndarray):
+                return str(obj)
+            elif not isinstance(
+                    obj, (list, set, str, int, float, bytearray, bool)):
+                return obj.jsonable
+
+        return JSONEncoder.default(self, obj)
+
 
 def uuid(content, prefix='Ø'):
     """
