@@ -14,7 +14,7 @@ class FiniteCollection(Collection):
 
         self._uuids = ""
         for data in self._datas:
-            self._uuids = self._uuids + data.uuid
+            self._uuids += data.uuid if data else "00000000000000000000"
 
     def updated(self, transformations, datas=None, failure='keep'):
         """Recreate Collection object with updated history, failure and datas.
