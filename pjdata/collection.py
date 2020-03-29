@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import Iterator
 
 from pjdata.aux.identifyable import Identifyable
@@ -56,3 +57,8 @@ class Collection(Identifyable):
         else:
             return self.history.last.step.upper(), \
                    self.dataset.uuid + self.history.uuid + self._uuids
+
+    @property
+    @lru_cache
+    def all_nones(self):
+        return not any(self._datas)
