@@ -38,6 +38,7 @@ class Collection(Identifyable):
         self.dataset = NoDataset if dataset is None else dataset
         self.next_index = 0
         self.original_data = original_data
+        self._all_nones = None
 
     def __iter__(self):
         return self
@@ -59,6 +60,7 @@ class Collection(Identifyable):
                    self.dataset.uuid + self.history.uuid + self._uuids
 
     @property
-    @lru_cache
     def all_nones(self):
-        return not any(self._datas)
+        if self._all_nones is None:
+            self._all_nones = not any(self._datas)
+        return self._all_nones
