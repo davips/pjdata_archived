@@ -166,7 +166,7 @@ class Data(Identifyable, LinAlgHelper, Printable):
         """First character indicates the step of the last transformation,
         or 'd' if none."""
         if self.history.last is None:
-            return 'd', self.dataset.uuid + self.history.uuid
+            return 'd', self.dataset.uuid
         else:
             return self.history.last.step, \
                    self.dataset.uuid + self.history.uuid

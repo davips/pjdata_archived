@@ -5,6 +5,8 @@ from pjdata.aux.encoders import uuid
 
 
 class Identifyable(ABC):
+    none = 'DØØØØØØØØØØØØØØØØØØ0'
+
     @property
     @lru_cache()
     def uuid(self):
