@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
 from functools import lru_cache
 
-from pjdata.aux.encoders import uuid
+from pjdata.aux.encoders import uuid, int2tiny
 
 
 class Identifyable(ABC):
-    none = 'DØØØØØØØØØØØØØØØØØØ0'
+    nothing = 'D' + int2tiny(0)
 
     @property
     @lru_cache()
