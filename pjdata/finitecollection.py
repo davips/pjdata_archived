@@ -1,9 +1,10 @@
 from pjdata.collection import Collection
-from pjdata.data import NoData
 from pjdata.history import History
 
 
 class FiniteCollection(Collection):
+    from pjdata.data import NoData
+
     def __init__(self, datas, history=None, failure=None,
                  dataset=None, original_data=NoData):
         super().__init__(history, failure, dataset, original_data)
