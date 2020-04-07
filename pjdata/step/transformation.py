@@ -1,24 +1,43 @@
-from abc import ABC
 from functools import lru_cache
 
+from pjdata.aux.serialization import deserialize
 from pjdata.mixin.identifyable import Identifyable
-from pjdata.aux.serialization import serialize, deserialize
+from pjdata.mixin.printable import Printable
 
 
-class Transformation(Identifyable):
+class Transformation(Identifyable, Printable):
     def __init__(self, transformer, step):
         if step is None:
             raise Exception(
                 'Operation cannot be None! Hint: self._transformation() '
                 'should be called only during apply() or use() steps!')
-        self.step = step
-        self._config = transformer.serialized
+        self.name, self.path = transformer.name, transformer.path
         self._uuid = transformer.uuid
-
-    def _uuid_impl(self):
-        return self.step, self.uuid
+        self._serialized_transformer = transformer.serialized
+        super().__init__(self._serialized_transformer)
+        self.step = step
 
     @property
     @lru_cache()
     def config(self):
-        return deserialize(self._config)
+        return deserialize(self._serialized_transformer)
+
+    def _uuid_impl(self):
+        return self.step, self._uuid
+
+
+class NoTransformation(type):
+    transformer = None
+    step = None
+    name = None
+    path = None
+    config = None
+    from pjdata.aux.encoders import int2tiny
+    uuid = 'T' + int2tiny(0)
+
+    def __new__(cls, *args, **kwargs):
+        raise Exception(
+            'NoTransformation is a singleton and shouldn\'t be instantiated')
+
+    def __bool__(self):
+        return False
