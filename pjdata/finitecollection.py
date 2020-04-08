@@ -3,7 +3,7 @@ from pjdata.history import History
 
 
 class FiniteCollection(Collection):
-    from pjdata.data import NoData
+    from pjdata.specialdata import NoData
 
     def __init__(self, datas, history=None, failure=None, original_data=NoData):
         super().__init__(history, failure, original_data)
