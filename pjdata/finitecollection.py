@@ -5,9 +5,8 @@ from pjdata.history import History
 class FiniteCollection(Collection):
     from pjdata.data import NoData
 
-    def __init__(self, datas, history=None, failure=None,
-                 dataset=None, original_data=NoData):
-        super().__init__(history, failure, dataset, original_data)
+    def __init__(self, datas, history=None, failure=None, original_data=NoData):
+        super().__init__(history, failure, original_data)
 
         self._datas = datas
         self.size = len(datas)
@@ -45,7 +44,7 @@ class FiniteCollection(Collection):
         return FiniteCollection(
             datas=datas,
             history=self.history.extended(transformations),
-            failure=failure, dataset=self.dataset,
+            failure=failure,
             original_data=self.original_data
         )
 
@@ -59,7 +58,6 @@ class FiniteCollection(Collection):
             self._datas,
             history=History(self.history[:-1] + [transformation]),
             failure=self.failure,
-            dataset=self.dataset,
             original_data=self.original_data
         )
 

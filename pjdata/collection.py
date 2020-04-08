@@ -29,14 +29,12 @@ class Collection(AbstractData):
         The user can set a dataset if convenient.
     """
 
-    def __init__(self, history, failure, dataset, original_data):
+    def __init__(self, history, failure, original_data):
         # TODO: is collection printable?
         if history is None:
             history = History([])
         self.history = history
         self.failure = failure
-        from pjdata.dataset import NoDataset
-        self.dataset = NoDataset if dataset is None else dataset
         self.next_index = 0
         self.original_data = original_data
         self._all_nones = None
@@ -55,10 +53,10 @@ class Collection(AbstractData):
 
     def _uuid_impl(self):
         if self.history.last is None:
-            return 'c', self.dataset.uuid + self.history.uuid + self._uuids
+            return 'c', self.history.uuid + self._uuids
         else:
             return self.history.last.step.upper(), \
-                   self.dataset.uuid + self.history.uuid + self._uuids
+                   self.history.uuid + self._uuids
 
     @property
     def all_nones(self):

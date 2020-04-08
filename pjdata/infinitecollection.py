@@ -7,8 +7,8 @@ from pjdata.history import History
 class InfiniteCollection(Collection):
     _almost_infinity = 10_000_000_000
 
-    def __init__(self, data, history=None, failure=None, dataset=None):
-        super().__init__(history, failure, dataset, data)
+    def __init__(self, data, history=None, failure=None):
+        super().__init__(history, failure, data)
 
         # Yes, all Data objects here are exactly the same (immutability):
         self._datas = repeat(data, times=self._almost_infinity)
@@ -50,7 +50,7 @@ class InfiniteCollection(Collection):
         return FiniteCollection(
             datas=datas,
             history=self.history.extended(transformations),
-            failure=failure, dataset=self.dataset,
+            failure=failure,
             original_data=self.original_data
         )
 
@@ -63,12 +63,10 @@ class InfiniteCollection(Collection):
         return InfiniteCollection(
             self.original_data,
             history=History(self.history[:-1] + [transformation]),
-            failure=self.failure,
-            dataset=self.dataset
+            failure=self.failure
         )
 
     def __str__(self):
         return 'Infinite collection!' + \
                str(self.history) + ' ' + \
-               str(self.failure) + ' ' + \
-               str(self.dataset)
+               str(self.failure) + ' '
