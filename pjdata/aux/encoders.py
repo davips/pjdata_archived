@@ -1,4 +1,5 @@
 import hashlib
+import json
 
 from json import JSONEncoder, JSONDecoder
 import numpy as np
@@ -11,7 +12,7 @@ class CustomJSONEncoder(JSONEncoder):
             if isinstance(obj, Transformation):
                 # This eval is here instead of at transformation.py, to defer
                 # such heavy calculation to the printing time, i.e. when needed.
-                jsonable = eval(obj.jsonable)
+                jsonable = json.loads(obj.jsonable)
                 jsonable['step'] = obj.step
                 return jsonable
             elif isinstance(obj, np.ndarray):
