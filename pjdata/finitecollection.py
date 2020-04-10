@@ -62,4 +62,5 @@ class FiniteCollection(Collection):
         )
 
     def __str__(self):
-        return '\n'.join(str(data) for data in self._datas)
+        return 'FiniteCollection [' + \
+               '\n'.join(str(data) for data in self._datas) + ']'
