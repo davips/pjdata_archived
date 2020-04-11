@@ -17,43 +17,6 @@ class InfiniteCollection(Collection):
 
         self._uuids = next(self._datas).uuid
 
-    def updated(self, transformations, datas=None, failure='keep'):
-        """Recreate Collection object with updated history, failure and datas.
-
-        Parameters
-        ----------
-        transformations
-            List of Transformation objects.
-        failure
-            The failure caused by the given transformation, if it failed.
-            'keep' (recommended, default) = 'keep this attribute unchanged'.
-            None (unusual) = 'no failure', possibly overriding previous failures
-        datas
-            New list of Data object.
-
-        Returns
-        -------
-        New Collection object (it may keep some references for performance).
-        """
-        if failure == 'keep':
-            failure = self.failure
-
-        if datas is None:
-            raise Exception('11111111112222222222 444444444444')
-            # return InfiniteCollection(
-            #     data=self.original_data,
-            #     history=self.history.extended(transformations),
-            #     failure=failure, dataset=self.dataset
-            # )
-
-        # TODO: to require changes on Xt and Xd when X is changed.
-        return FiniteCollection(
-            datas=datas,
-            history=self.history.extended(transformations),
-            failure=failure,
-            original_data=self.original_data
-        )
-
     def last_transformation_replaced(self, transformation):
         """Replace last transformation in history for convenience.
 
