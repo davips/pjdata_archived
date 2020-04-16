@@ -44,7 +44,7 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
 
 
 INSTALL_REQUIRES = [
-    'liac-arff', 'pandas', 'sklearn'
+    'liac-arff', 'pandas', 'sklearn', 'pycryptodome'
 ]
 
 

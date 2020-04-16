@@ -53,6 +53,15 @@ def int2tiny(number):
     return enc(number).rjust(19, 'Ø')
 
 
+def tiny2int(digest):
+    """Convert tiny string (19 chars) to number."""
+
+
+def tiny2bytes(digest):
+    """Convert tiny string (19 chars) to bytes."""
+    return dec(digest).to_bytes(19, 'big')
+
+
 def hex2int(hexdigest):
     """
     Convert hex MD5 representation (32 digits in base-16) to int.
@@ -152,19 +161,19 @@ def enc(big_number, alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     return ''.join(res)[::-1]
 
 
-def encrypt(text, key):
+def encrypt(msg_bytes, key_bytes):
     """Encrypt."""
     from Crypto.Cipher import AES
     AES.key_size = (32,)
-    cipher = AES.new(key.encode().rjust(32), AES.MODE_ECB)
-    return cipher.encrypt(text.encode().rjust(32))
+    cipher = AES.new(key_bytes.rjust(32), AES.MODE_ECB)
+    return cipher.encrypt(msg_bytes.rjust(32))
 
 
-def decrypt(encoded, key):
+def decrypt(encrypted_msg, key_bytes):
     """Decrypt. Strip left trailing espaces!"""
     from Crypto.Cipher import AES
-    cipher = AES.new(key.encode().rjust(32), AES.MODE_ECB)
-    return cipher.decrypt(encoded).lstrip().decode()
+    cipher = AES.new(key_bytes.rjust(32), AES.MODE_ECB)
+    return cipher.decrypt(encrypted_msg).lstrip()
 
 
 def merge(cumulated_uuid, uuid_to_add):
@@ -175,9 +184,9 @@ def merge(cumulated_uuid, uuid_to_add):
     result = merge(cumulated_uuid, new_uuid)
     unmerge(result, new_uuid) == cumulated_uuid
     """
-    return encrypt(text=cumulated_uuid, key=uuid_to_add)
+    return encrypt(bytes=cumulated_uuid, key=uuid_to_add)
 
 
 def unmerge(cumulated_uuid, last_added_uuid):
     """Undo noncommutative combination of two UUIDs."""
-    return decrypt(encoded=cumulated_uuid, key=last_added_uuid)
+    return decrypt(encrypted_msg=cumulated_uuid, key=last_added_uuid)
