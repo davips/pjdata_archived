@@ -150,3 +150,34 @@ def enc(big_number, alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         if big_number == 0:
             break
     return ''.join(res)[::-1]
+
+
+def encrypt(text, key):
+    """Encrypt."""
+    from Crypto.Cipher import AES
+    AES.key_size = (32,)
+    cipher = AES.new(key.encode().rjust(32), AES.MODE_ECB)
+    return cipher.encrypt(text.encode().rjust(32))
+
+
+def decrypt(encoded, key):
+    """Decrypt. Strip left trailing espaces!"""
+    from Crypto.Cipher import AES
+    cipher = AES.new(key.encode().rjust(32), AES.MODE_ECB)
+    return cipher.decrypt(encoded).lstrip().decode()
+
+
+def merge(cumulated_uuid, uuid_to_add):
+    """Noncommutative combination of two UUIDs.
+
+    Results in a new one representing the chain transformation of both.
+    It is reversible by unmerge:
+    result = merge(cumulated_uuid, new_uuid)
+    unmerge(result, new_uuid) == cumulated_uuid
+    """
+    return encrypt(text=cumulated_uuid, key=uuid_to_add)
+
+
+def unmerge(cumulated_uuid, last_added_uuid):
+    """Undo noncommutative combination of two UUIDs."""
+    return decrypt(encoded=cumulated_uuid, key=last_added_uuid)
