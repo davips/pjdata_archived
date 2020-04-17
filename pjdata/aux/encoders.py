@@ -1,74 +1,84 @@
 import hashlib
 import json
+from dataclasses import dataclass
+from functools import lru_cache
+from json import JSONEncoder
 
-from json import JSONEncoder, JSONDecoder
 import numpy as np
 
 
-class CustomJSONEncoder(JSONEncoder):
-    def default(self, obj):
-        if obj is not None:
-            from pjdata.step.transformation import Transformation
-            if isinstance(obj, Transformation):
-                # This eval is here instead of at transformation.py, to defer
-                # such heavy calculation to the printing time, i.e. when needed.
-                jsonable = json.loads(obj.jsonable)
-                jsonable['step'] = obj.step
-                return jsonable
-            elif isinstance(obj, np.ndarray):
-                return str(obj)
-            elif not isinstance(
-                    obj, (list, set, str, int, float, bytearray, bool)):
-                return obj.jsonable
+@dataclass(frozen=True)
+class UUID:
+    null_digest = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+    null_pretty = '0000000000000000000'
 
-        return JSONEncoder.default(self, obj)
+    # TIP: Dataclass checks for equality on this field!
+    digest: bytes = null_digest
+
+    @property
+    @lru_cache()
+    def pretty(self):
+        return prettydigest(self.digest)
+
+    def __add__(self, other):
+        """Merge with another UUIDs.
+
+         Non commutative: a + b != b + a
+         Reversible: (a + b) - b = a
+         """
+        return UUID(push(new=other.digest, stack=self.digest))
+
+    def __sub__(self, other):
+        """Unmerge from last merged UUID."""
+        if other.digest == self.null_digest:
+            raise Exception(f'Cannot subtract from UUID={self.null_pretty}!')
+        return UUID(pop(last=other.digest, stack=self.digest))
+
+    def __str__(self):
+        return self.pretty
+
+    __repr__ = __str__  # TODO: is this needed?
 
 
-def uuid(content, prefix='Ø'):
+def uuid00(bytes_content):
+    return UUID(md5digest(bytes_content))
+
+
+def md5digest(bytes_content):
     """
-    Generates a UUID (unique for any reasonably finite universe).
+    Generates a hash intended for unique identification of content
+     (unique for any reasonably finite universe).
     It is preferred to generate such hash on compressed data,
-    since MD5 is much slower for bigger data than the compression itself.
-    :param content: encoded content; it can be a packed object, a text, JSON,...
-    :param prefix: adds a (preferably single character) prefix to the output
-    :return: prefix + <19 characters>
+    since MD5 is much slower for large data than the compression itself.
+    :param bytes_content:
+        encoded content; it can be a packed object, a text, JSON,...
+    :return: str <32 characters>
     """
-    # if content is None:
-    #     return None
-    return prefix + tiny_md5(hashlib.md5(content).hexdigest())
+    return hashlib.md5(bytes_content).digest()
 
 
-def tiny_md5(hexdigest):
+def prettydigest(bytes_digest):
     """
-    Convert hex MD5 representation (32 digits in base-16) to a friendly
-    shorter one (19 digits in base-113).
-    :param hexdigest:
+    Convert MD5 representation (16 bytes) to a friendly still short one
+     (19 digits in base-107).
+    :param bytes_digest:
     :return: string with 19 digits, padded with 'Ø' when needed
     """
-    return int2tiny(hex2int(hexdigest))
+    return int2pretty(bytes2int(bytes_digest))
 
 
-def int2tiny(number):
-    """Convert number to tiny string (19 chars)."""
-    return enc(number).rjust(19, 'Ø')
+def int2pretty(number):
+    """Convert number to a tiny human-friendly string (19 chars)."""
+    return enc(number).rjust(19, '0')
 
 
-def tiny2int(digest):
-    """Convert tiny string (19 chars) to number."""
-
-
-def tiny2bytes(digest):
-    """Convert tiny string (19 chars) to bytes."""
-    return dec(digest).to_bytes(19, 'big')
-
-
-def hex2int(hexdigest):
+def bytes2int(digest):
     """
-    Convert hex MD5 representation (32 digits in base-16) to int.
-    :param hexdigest:
+    Convert MD5 digest (16 bytes) to int.
+    :param digest:
     :return: int
     """
-    return int(hexdigest, 16)
+    return int.from_bytes(digest, 'big')
 
 
 def dec(digest, alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -162,31 +172,62 @@ def enc(big_number, alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 
 def encrypt(msg_bytes, key_bytes):
-    """Encrypt."""
+    """AES 16 bytes encryption."""
     from Crypto.Cipher import AES
-    AES.key_size = (32,)
-    cipher = AES.new(key_bytes.rjust(32), AES.MODE_ECB)
-    return cipher.encrypt(msg_bytes.rjust(32))
+    cipher = AES.new(key_bytes, AES.MODE_ECB)
+    return cipher.encrypt(msg_bytes)
 
 
 def decrypt(encrypted_msg, key_bytes):
-    """Decrypt. Strip left trailing espaces!"""
+    """AES 16 bytes decryption."""
     from Crypto.Cipher import AES
-    cipher = AES.new(key_bytes.rjust(32), AES.MODE_ECB)
-    return cipher.decrypt(encrypted_msg).lstrip()
+    cipher = AES.new(key_bytes, AES.MODE_ECB)
+    return cipher.decrypt(encrypted_msg)
 
 
-def merge(cumulated_uuid, uuid_to_add):
-    """Noncommutative combination of two UUIDs.
+def push(new, stack):
+    """Noncommutative combination of two sequences of bytes.
 
     Results in a new one representing the chain transformation of both.
     It is reversible by unmerge:
-    result = merge(cumulated_uuid, new_uuid)
-    unmerge(result, new_uuid) == cumulated_uuid
+    new_stack = push(new, stack)
+    stack = pop(new, new_stack)
     """
-    return encrypt(bytes=cumulated_uuid, key=uuid_to_add)
+    return encrypt(msg_bytes=stack, key_bytes=new)
 
 
-def unmerge(cumulated_uuid, last_added_uuid):
-    """Undo noncommutative combination of two UUIDs."""
-    return decrypt(encrypted_msg=cumulated_uuid, key=last_added_uuid)
+def pop(last, stack):
+    """Undo noncommutative combination of two sequences of bytes."""
+    return decrypt(encrypted_msg=stack, key_bytes=last)
+
+
+# def hex2int(hexdigest):
+#     """
+#     Convert hex MD5 representation (32 digits in base-16) to int.
+#     :param hexdigest:
+#     :return: int
+#     """
+#     return int(hexdigest, 16)
+
+def pretty2bytes(digest):
+    """Convert tiny string (19 chars) to bytes."""
+    return dec(digest).to_bytes(19, 'big')
+
+
+class CustomJSONEncoder(JSONEncoder):
+    def default(self, obj):
+        if obj is not None:
+            from pjdata.step.transformation import Transformation
+            if isinstance(obj, Transformation):
+                # This eval is here instead of at transformation.py, to defer
+                # such heavy calculation to the printing time, i.e. when needed.
+                jsonable = json.loads(obj.jsonable)
+                jsonable['step'] = obj.step
+                return jsonable
+            elif isinstance(obj, np.ndarray):
+                return str(obj)
+            elif not isinstance(
+                    obj, (list, set, str, int, float, bytearray, bool)):
+                return obj.jsonable
+
+        return JSONEncoder.default(self, obj)
