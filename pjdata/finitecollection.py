@@ -4,16 +4,12 @@ from pjdata.collection import Collection
 class FiniteCollection(Collection):
     from pjdata.specialdata import NoData
 
-    def __init__(self, datas, history=None, failure=None, original_data=NoData):
-        super().__init__(history, failure, original_data)
-
+    def __init__(self, datas, history=None, failure=None, original_data=NoData,
+                 uuid=None):
+        super().__init__(history, failure, original_data, uuid)
         self._datas = datas
         self.size = len(datas)
         self.has_nones = not all(datas)
-
-        self._uuids = ""
-        for data in self._datas:
-            self._uuids += data.uuid if data else "00000000000000000000"
 
     def last_transformation_replaced(self, transformation):
         """Replace last transformation in history for convenience.
@@ -23,9 +19,10 @@ class FiniteCollection(Collection):
         """
         return FiniteCollection(
             self._datas,
-            history=History(self.history[:-1] + [transformation]),
+            history=self.history[:-1] + [transformation],
             failure=self.failure,
-            original_data=self.original_data
+            original_data=self.original_data,
+            uuid=self.uuid00 - self.history[-1].uuid00 + transformation.uuid00
         )
 
     def __str__(self):
