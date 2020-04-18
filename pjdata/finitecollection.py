@@ -11,18 +11,25 @@ class FiniteCollection(Collection):
         self.size = len(datas)
         self.has_nones = not all(datas)
 
-    def last_transformation_replaced(self, transformation):
+    def last_transformations_replaced(self, drop, transformation):
         """Replace last transformation in history for convenience.
 
         Provided transformation should be equivalent to the replaced one for
         consistency.
         """
+
+        # Undo dropped transformations.
+        history = self.history[:-drop]
+        uuid = self.uuid00
+        for transformation_to_discard in reversed(self.history[-drop:]):
+            uuid -= transformation_to_discard.uuid00
+
         return FiniteCollection(
             self._datas,
-            history=self.history[:-1] + [transformation],
+            history=history + [transformation],
             failure=self.failure,
             original_data=self.original_data,
-            uuid=self.uuid00 - self.history[-1].uuid00 + transformation.uuid00
+            uuid=uuid + transformation.uuid00
         )
 
     def __str__(self):

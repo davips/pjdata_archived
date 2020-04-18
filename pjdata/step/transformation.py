@@ -1,6 +1,5 @@
 from functools import lru_cache
 
-from pjdata.aux.encoders import UUID
 from pjdata.aux.serialization import deserialize
 from pjdata.mixin.identifyable import Identifyable
 from pjdata.mixin.printable import Printable
@@ -15,7 +14,9 @@ class Transformation(Identifyable, Printable):
         self.name, self.path = transformer.name, transformer.path
         self.transformer_uuid00 = transformer.uuid00
         self._serialized_transformer = transformer.serialized
-        super().__init__(self._serialized_transformer)
+
+        # TIP: Step is being added to jsonable by Printable.
+        super().__init__(jsonable=self._serialized_transformer)
         self.step = step
 
     @property
@@ -24,8 +25,11 @@ class Transformation(Identifyable, Printable):
         return deserialize(self._serialized_transformer)
 
     def _uuid_impl00(self):
-        return self.transformer_uuid00 + UUID(self.step.encode())
-
+        from pjdata.aux.encoders import uuid00
+        # Mark step to differentiate 'apply' from 'use'. And also to avoid
+        # having the same uuid as its transformer.
+        mark = uuid00(self.step.encode())
+        return self.transformer_uuid00 + mark
 
 # class NoTransformation(type):
 #     transformer = None

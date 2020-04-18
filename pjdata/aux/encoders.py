@@ -22,6 +22,10 @@ class UUID:
     def pretty(self):
         return digest2pretty(self.digest)
 
+    @staticmethod
+    def from_pretty(txt):
+        return UUID(pretty2bytes(txt))
+
     def __add__(self, other):
         """Merge with another UUIDs.
 
@@ -32,7 +36,7 @@ class UUID:
 
     def __sub__(self, other):
         """Unmerge from last merged UUID."""
-        if other.digest == self.null_digest:
+        if self.digest == self.null_digest:
             raise Exception(f'Cannot subtract from UUID={self.null_pretty}!')
         return UUID(pop(last=other.digest, stack=self.digest))
 
@@ -213,7 +217,7 @@ def pop(last, stack):
 
 def pretty2bytes(digest):
     """Convert tiny string (19 chars) to bytes."""
-    return dec(digest).to_bytes(19, 'big')
+    return dec(digest).to_bytes(16, 'big')
 
 
 def prettydigest(bytes_content):
@@ -232,6 +236,8 @@ class CustomJSONEncoder(JSONEncoder):
                 return jsonable
             elif isinstance(obj, np.ndarray):
                 return str(obj)
+            elif isinstance(obj, UUID):
+                return obj.pretty
             elif not isinstance(
                     obj, (list, set, str, int, float, bytearray, bool)):
                 return obj.jsonable
