@@ -1,7 +1,6 @@
 from itertools import repeat
+
 from pjdata.collection import Collection
-from pjdata.finitecollection import FiniteCollection
-from pjdata.history import History
 
 
 class InfiniteCollection(Collection):

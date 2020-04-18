@@ -15,10 +15,12 @@ class UUID:
     # TIP: Dataclass checks for equality on this field!
     digest: bytes = null_digest
 
+    isnull = digest == null_digest
+
     @property
     @lru_cache()
     def pretty(self):
-        return prettydigest(self.digest)
+        return digest2pretty(self.digest)
 
     def __add__(self, other):
         """Merge with another UUIDs.
@@ -57,7 +59,7 @@ def md5digest(bytes_content):
     return hashlib.md5(bytes_content).digest()
 
 
-def prettydigest(bytes_digest):
+def digest2pretty(bytes_digest):
     """
     Convert MD5 representation (16 bytes) to a friendly still short one
      (19 digits in base-107).
@@ -212,6 +214,10 @@ def pop(last, stack):
 def pretty2bytes(digest):
     """Convert tiny string (19 chars) to bytes."""
     return dec(digest).to_bytes(19, 'big')
+
+
+def prettydigest(bytes_content):
+    return digest2pretty(md5digest(bytes_content))
 
 
 class CustomJSONEncoder(JSONEncoder):

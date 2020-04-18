@@ -1,5 +1,4 @@
 from pjdata.collection import Collection
-from pjdata.history import History
 
 
 class FiniteCollection(Collection):
