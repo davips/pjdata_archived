@@ -68,7 +68,7 @@ def digest2pretty(bytes_digest):
     Convert MD5 representation (16 bytes) to a friendly still short one
      (19 digits in base-107).
     :param bytes_digest:
-    :return: string with 19 digits, padded with 'Ø' when needed
+    :return: string with 19 digits, padded with '0' when needed
     """
     return int2pretty(bytes2int(bytes_digest))
 
@@ -222,6 +222,17 @@ def pretty2bytes(digest):
 
 def prettydigest(bytes_content):
     return digest2pretty(md5digest(bytes_content))
+
+
+def intlist2bytes(lst):
+    """Each int becomes 4 bytes. max=4294967294"""
+    return b''.join([n.to_bytes(4, byteorder='big') for n in lst])
+
+
+def bytes2intlist(bytes_content):
+    """Each 4 bytes become an int."""
+    n = len(bytes_content)
+    return [bytes2int(bytes_content[i:i + 4]) for i in range(0, n, 4)]
 
 
 class CustomJSONEncoder(JSONEncoder):
