@@ -32,13 +32,13 @@ class UUID:
          Non commutative: a + b != b + a
          Reversible: (a + b) - b = a
          """
-        return UUID(push(new=other.digest, stack=self.digest))
+        return UUID(encrypt(msg_bytes=other.digest, key_bytes=self.digest))
 
     def __sub__(self, other):
         """Unmerge from last merged UUID."""
         if self.digest == self.null_digest:
             raise Exception(f'Cannot subtract from UUID={self.null_pretty}!')
-        return UUID(pop(last=other.digest, stack=self.digest))
+        return UUID(decrypt(encrypted_msg=other.digest, key_bytes=self.digest))
 
     def __str__(self):
         return self.pretty
@@ -76,6 +76,10 @@ def digest2pretty(bytes_digest):
 def int2pretty(number):
     """Convert number to a tiny human-friendly string (19 chars)."""
     return enc(number).rjust(19, '0')
+
+
+def int2bytes(x):
+    return x.to_bytes(16, 'big')
 
 
 def bytes2int(digest):
@@ -191,33 +195,68 @@ def decrypt(encrypted_msg, key_bytes):
     return cipher.decrypt(encrypted_msg)
 
 
-def push(new, stack):
-    """Noncommutative combination of two sequences of bytes.
-
-    Results in a new one representing the chain transformation of both.
-    It is reversible by unmerge:
-    new_stack = push(new, stack)
-    stack = pop(new, new_stack)
-    """
-    return encrypt(msg_bytes=stack, key_bytes=new)
+# def checksum(number):
+#     return number %
 
 
-def pop(last, stack):
-    """Undo noncommutative combination of two sequences of bytes."""
-    return decrypt(encrypted_msg=stack, key_bytes=last)
+# def rshift(msg_int):
+#     return (msg_int >> 1) | ((msg_int & 1) << 127)
+#
+#
+# def lshift(msg_int):
+#     return ((msg_int & mask_127ones) << 1) | (msg_int >> 127)
+#
+
+# def rev_hash(msg_int, key_int):
+#     """A *reversible* hash, the nightmare of cryptologists."""
+#     result = lshift(msg_int) ^ key_int
+#     return pepper(result)
+#
+#
+# def rev_unhash(encrypted_msg_int, key_int):
+#     xor = pepper(encrypted_msg_int) ^ key_int
+#     return rshift(xor)
+
+# def pepper(msg, index):
+#     print(bin(msg))
+#     pos = (msg >> index) & 127
+#     print(bin(pos))
+#     peppered = msg ^ (2 ** pos)
+#     print(bin(peppered))
+#     pos2 = (peppered >> index) & 127
+#     print(bin(pos2))
+#     correction = 255 ((pos ^ pos2) << index)
+#     print(bin(correction))
+#     print(bin(msg & correction))
+#     exit()
+#
+#
+# def rev_hash(msg_int, key_int):
+#     """A *reversible* hash, the nightmare of cryptologists."""
+#     xor = msg_int ^ key_int
+#     lshift = (((xor & mask_127ones) << 1) | (xor >> 127))
+#     for i in range(6):
+#         lshift = pepper(lshift, i)
+#     return lshift ^ key_int
+#
+#
+# def rev_unhash(encrypted_msg_int, key_int):
+#     xor = encrypted_msg_int ^ key_int
+#     for i in reversed(range(6)):
+#         xor = pepper(xor, i)
+#     rshift = (xor >> 1) | ((xor & 1) << 127)
+#     return rshift ^ key_int
 
 
-# def hex2int(hexdigest):
-#     """
-#     Convert hex MD5 representation (32 digits in base-16) to int.
-#     :param hexdigest:
-#     :return: int
-#     """
-#     return int(hexdigest, 16)
 
 def pretty2bytes(digest):
     """Convert tiny string (19 chars) to bytes."""
     return dec(digest).to_bytes(16, 'big')
+
+
+def pretty2int(digest):
+    """Convert tiny string (19 chars) to bytes."""
+    return dec(digest)
 
 
 def prettydigest(bytes_content):
