@@ -45,6 +45,7 @@ class UUID:
 
     __repr__ = __str__  # TODO: is this needed?
 
+
 # @dataclass(frozen=True)
 # class UUID:
 #     # TIP: Dataclass checks for equality on this field!
@@ -281,7 +282,6 @@ def decrypt(encrypted_msg, key_bytes):
 #     return rshift ^ key_int
 
 
-
 def pretty2bytes(digest):
     """Convert tiny string (19 chars) to bytes."""
     return dec(digest).to_bytes(16, 'big')
@@ -312,10 +312,8 @@ class CustomJSONEncoder(JSONEncoder):
         if obj is not None:
             from pjdata.step.transformation import Transformation
             if isinstance(obj, Transformation):
-                # This eval is here instead of at transformation.py, to defer
-                # such heavy calculation to the printing time, i.e. when needed.
-                jsonable = json.loads(obj.jsonable)
-                jsonable['step'] = obj.step
+                jsonable = obj.jsonable.copy()
+                jsonable['transformer'] = json.loads(jsonable['transformer'])
                 return jsonable
             elif isinstance(obj, np.ndarray):
                 return str(obj)
