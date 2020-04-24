@@ -310,12 +310,7 @@ def bytes2intlist(bytes_content):
 class CustomJSONEncoder(JSONEncoder):
     def default(self, obj):
         if obj is not None:
-            from pjdata.step.transformation import Transformation
-            if isinstance(obj, Transformation):
-                jsonable = obj.jsonable.copy()
-                jsonable['transformer'] = json.loads(jsonable['transformer'])
-                return jsonable
-            elif isinstance(obj, np.ndarray):
+            if isinstance(obj, np.ndarray):
                 return str(obj)
             elif isinstance(obj, UUID):
                 return obj.pretty
