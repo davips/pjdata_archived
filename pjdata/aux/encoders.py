@@ -19,7 +19,8 @@ class UUID:
 
     @property
     @lru_cache()
-    def pretty(self):
+    def id(self):
+        """Pretty printing version, proper for use in databases also."""
         return digest2pretty(self.digest)
 
     @staticmethod
@@ -32,6 +33,13 @@ class UUID:
          Non commutative: a + b != b + a
          Reversible: (a + b) - b = a
          """
+        # if self.id=='ÑF39þOÉQhfÊðæ28eu8c':
+        # if other.id=='mxlÐé1uwJÞTÖ2ßRSíÊc':
+        #     raise Exception()
+        u = UUID(encrypt(msg_bytes=self.digest, key_bytes=other.digest))
+        if u == '0ÄÜûDæQÏ1ðMÜRÓóçEOy':
+            raise Exception()
+        # print(self, '+++++++++++++', other, ':', u)
         return UUID(encrypt(msg_bytes=self.digest, key_bytes=other.digest))
 
     def __sub__(self, other):
@@ -41,7 +49,7 @@ class UUID:
         return UUID(decrypt(encrypted_msg=self.digest, key_bytes=other.digest))
 
     def __str__(self):
-        return self.pretty
+        return self.id
 
     __repr__ = __str__  # TODO: is this needed?
 
@@ -313,9 +321,54 @@ class CustomJSONEncoder(JSONEncoder):
             if isinstance(obj, np.ndarray):
                 return str(obj)
             elif isinstance(obj, UUID):
-                return obj.pretty
+                return obj.id
             elif not isinstance(
                     obj, (list, set, str, int, float, bytearray, bool)):
                 return obj.jsonable
 
         return JSONEncoder.default(self, obj)
+
+#
+# def tobinmats(m):
+#     int8s = np.frombuffer(m, dtype=np.uint8)
+#     ma = np.unpackbits(int8s)[:64].reshape(8, 8)
+#     mb = np.unpackbits(int8s)[64:].reshape(8, 8)
+#     return ma, mb
+#
+#
+# def e1(m, k):
+#     ma, mb = tobinmats(m)
+#     ka, kb = tobinmats(k)
+#     a = np.matmul(ma, ka)
+#     print(a)
+#     b = np.matmul(mb, kb)
+#     print(b)
+#     print(np.packbits(a))
+#     print(np.unpackbits(np.packbits(a)))
+#     return np.packbits(a) + np.packbits(b)
+#
+#
+# def e(t, k):
+#     mt = np.frombuffer(t, dtype=np.float32).reshape(2, 2)
+#     mk = np.frombuffer(k, dtype=np.float32).reshape(2, 2)
+#     mm = np.matmul(mt, mk)
+#     return mm.tobytes()
+#
+#
+# def d(t, k):
+#     mt = np.frombuffer(t, dtype=np.float32).reshape(2, 2)
+#     mk = np.frombuffer(k, dtype=np.float32).reshape(2, 2)
+#     mm = np.matmul(mt, np.linalg.inv(mk))
+#     return mm.tobytes()
+#
+#
+# k = b'1234567890123456'
+# t = b'9999999999999999'
+# print(bytes2int(t))
+#
+# en = e(t, k)
+# print(bytes2int(en))
+#
+# de = d(en, k)
+# print(bytes2int(de))
+# print()
