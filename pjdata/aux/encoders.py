@@ -1,6 +1,6 @@
 import hashlib
 from dataclasses import dataclass
-from functools import lru_cache
+from functools import lru_cache, partial
 from json import JSONEncoder
 from operator import itemgetter
 
@@ -458,8 +458,13 @@ def print_binmatrix(m):
     for row in m:
         print(format(2 ** row, '035b'), row)
 
+
+# from functools import partial
+# from timeit import timeit
+# from math import factorial
 #
-# b = int2permutmatrix(factorial(35)//348765)
+# a = int2permutmatrix(factorial(35) // 76672341)
+# b = int2permutmatrix(factorial(35) // 348765)
 # print_binmatrix(b)
 # print()
 # print_binmatrix(transpose(b))
@@ -467,6 +472,9 @@ def print_binmatrix(m):
 # print_binmatrix(transpose(transpose(b)))
 # print()
 #
-# t = timeit(partial(transpose, b), number=1000)
-#
-# print(t, 'ms')
+# print(timeit(partial(permmult, a, b), number=1000), 'ms')
+# print(timeit(partial(transpose, b), number=1000), 'ms')
+# print(timeit(partial(permutmatrix2int, a), number=1000), 'ms')
+# print(timeit(partial(
+#     int2permutmatrix, 89928374983467987
+# ), number=1000), 'ms')
