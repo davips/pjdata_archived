@@ -1,10 +1,11 @@
 import hashlib
-import json
 from dataclasses import dataclass
 from functools import lru_cache
 from json import JSONEncoder
+from operator import itemgetter
 
 import numpy as np
+from sortedcontainers import SortedSet, SortedDict
 
 
 @dataclass(frozen=True)
@@ -328,6 +329,7 @@ class CustomJSONEncoder(JSONEncoder):
 
         return JSONEncoder.default(self, obj)
 
+
 #
 # def tobinmats(m):
 #     int8s = np.frombuffer(m, dtype=np.uint8)
@@ -372,3 +374,99 @@ class CustomJSONEncoder(JSONEncoder):
 # de = d(en, k)
 # print(bytes2int(de))
 # print()
+
+def permutmatrix2int(m):
+    """Convert permutation matrix 35x35 to number."""
+    taboo = SortedSet()
+    digits = []
+    rowid = 34
+    for bit in m[:-1]:
+        bitold = bit
+        for f in taboo:
+            if bitold >= f:
+                bit -= 1
+        taboo.add(bitold)
+        digits.append(bit)
+        rowid -= 1
+
+    big_number = digits[0]
+    pos = 0
+    base = b = 35
+    for digit in digits[1:]:
+        old = big_number
+        big_number += b * digit
+        pos += 1
+        base -= 1
+        b *= base
+
+    return big_number
+
+
+def int2permutmatrix(big_number):
+    """Convert number to permutation matrix 35x35."""
+    taboo = SortedDict()
+    res = big_number
+    base = 35
+    bit = 0
+    while base > 1:
+        res, bit = divmod(res, base)
+        if res + bit == 0:
+            bit = 0
+        for ta in taboo:
+            if bit >= ta:
+                bit += 1
+        base -= 1
+        taboo[bit] = base
+
+    for bit in range(35):
+        if bit not in taboo:
+            break
+    taboo[bit] = base - 1
+
+    return list(map(
+        itemgetter(0), sorted(taboo.items(), reverse=True, key=itemgetter(1))
+    ))
+
+
+def permmult(a, b):
+    """Multiply two permutation matrices 35x35.
+     a,b: lists of positive integers and zero."""
+    c = []
+    for row in a:
+        c.append(b[-row])
+    return c
+
+
+def transpose(m):
+    """Transpose a permutation matrix 35x35.
+     m: list of positive integers and zero."""
+    c = {}
+    idx = 0
+    for row in reversed(m):
+        c[-row] = idx
+        idx += 1
+
+    return list(map(
+        itemgetter(1), sorted(c.items(), reverse=False, key=itemgetter(0))
+    ))
+
+
+def print_binmatrix(m):
+    """Print a permutation matrix 35x35.
+     m: list of positive integers and zero."""
+
+    for row in m:
+        print(format(2 ** row, '035b'), row)
+
+#
+# b = int2permutmatrix(factorial(35)//348765)
+# print_binmatrix(b)
+# print()
+# print_binmatrix(transpose(b))
+# print()
+# print_binmatrix(transpose(transpose(b)))
+# print()
+#
+# t = timeit(partial(transpose, b), number=1000)
+#
+# print(t, 'ms')
