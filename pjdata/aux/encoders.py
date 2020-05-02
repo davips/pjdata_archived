@@ -29,16 +29,16 @@ def md5digest(bytes_content):
 def digest2pretty(bytes_digest):
     """
     Convert MD5 representation (16 bytes) to a friendly still short one
-     (19 digits in base-107).
+     (20 digits in base-107).
     :param bytes_digest:
-    :return: string with 19 digits, padded with '0' when needed
+    :return: string with 20 digits, padded with '0' when needed
     """
     return int2pretty(bytes2int(bytes_digest))
 
 
 def int2pretty(number):
-    """Convert number to a tiny human-friendly string (19 chars)."""
-    return enc(number).rjust(19, '0')
+    """Convert number to a tiny human-friendly string (20 chars)."""
+    return enc(number).rjust(20, '0')
 
 
 def int2bytes(x):
@@ -77,7 +77,7 @@ def enc(big_number, alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
                              'ÁÂÄÅÆÉÊËÍÎÏÐÑÓÔÖÚÛÜÝÞßáâäåæçéêëíîïðñóôöøúûüýþ'):
     """
     Encode an integer to base-n. n = len(alphabet).
-    The default is base107 since it is enough to represent MD5 as 19 chars.
+    The default is base107 since it is enough to represent MD5 as 18-19 chars.
     The selected default alphabet contains only numbers and letters. Similar
     letters were arbitrarily removed.
     This alphabet is intended to be printable and to be free of
@@ -159,12 +159,12 @@ def decrypt(encrypted_msg, key_bytes):
 
 
 def pretty2bytes(digest):
-    """Convert tiny string (19 chars) to bytes."""
+    """Convert tiny string (20 chars) to bytes."""
     return dec(digest).to_bytes(16, 'big')
 
 
 def pretty2int(digest):
-    """Convert tiny string (19 chars) to bytes."""
+    """Convert tiny string (20 chars) to bytes."""
     return dec(digest)
 
 
