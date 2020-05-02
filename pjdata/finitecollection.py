@@ -22,14 +22,14 @@ class FiniteCollection(Collection):
         history = self.history[:-drop]
         uuid = self.uuid
         for transformation_to_discard in reversed(self.history[-drop:]):
-            uuid -= transformation_to_discard.uuid
+            uuid /= transformation_to_discard.uuid
 
         return FiniteCollection(
             self._datas,
             history=history + [transformation],
             failure=self.failure,
             original_data=self.original_data,
-            uuid=uuid + transformation.uuid
+            uuid=uuid * transformation.uuid
         )
 
     def __str__(self):
