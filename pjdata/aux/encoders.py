@@ -4,90 +4,82 @@ from functools import lru_cache, partial
 from json import JSONEncoder
 from operator import itemgetter
 
+import fastrand
 import numpy as np
+from numpy.random.mtrand import random
 from sortedcontainers import SortedSet, SortedDict
 
 
-@dataclass(frozen=True)
 class UUID:
-    null_digest = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+    null_matrix = list(range(35))
     null_pretty = '0000000000000000000'
+    _id = None
 
-    # TIP: Dataclass checks for equality on this field!
-    digest: bytes = null_digest
+    def __init__(self, matrix_or_number_or_pretty):
+        if isinstance(matrix_or_number_or_pretty, list):
+            if len(matrix_or_number_or_pretty) != 35:
+                raise Exception('Permutation matrix should be 35x35! Not',
+                                len(matrix_or_number_or_pretty))
+            self.matrix = matrix_or_number_or_pretty
+        elif isinstance(matrix_or_number_or_pretty, int):
+            if matrix_or_number_or_pretty > 2 ** 128 - 1:
+                raise Exception('Number should be 128-bit! Not 2**',
+                                log2(matrix_or_number_or_pretty))
+            self.matrix = int2pmatrix(matrix_or_number_or_pretty)
+        elif isinstance(matrix_or_number_or_pretty, str):
+            if len(matrix_or_number_or_pretty) not in [18, 19]:
+                raise Exception('Pretty str should be 18-19 chars long! Not',
+                                len(matrix_or_number_or_pretty))
+            self._id = matrix_or_number_or_pretty
+            self.matrix = int2pmatrix(pretty2int(matrix_or_number_or_pretty))
+        else:
+            raise Exception('Wrong argument type for UUID:',
+                            type(matrix_or_number_or_pretty))
+        self.isnull = self.matrix == self.null_matrix
 
-    isnull = digest == null_digest
+    # @property
+    # @lru_cache()
+    def inv(self):
+        """Pretty printing version, proper for use in databases also."""
+        return UUID(transpose(self.matrix))
 
-    @property
-    @lru_cache()
+    # @property
     def id(self):
         """Pretty printing version, proper for use in databases also."""
-        return digest2pretty(self.digest)
+        if self._id is None:
+            self._id = int2pretty(pmatrix2int(self.matrix))
+        return self._id
 
-    @staticmethod
-    def from_pretty(txt):
-        return UUID(pretty2bytes(txt))
+    def __mul__(self, other):
+        """Flexible merge/unmerge with another UUID.
+
+         Non commutative: a * b != b * a
+         Invertible: (a * b) * b.inv = a
+                     a.inv * (a * b) = b
+         Associative: (a * b) * c = a * (b * c)
+         """
+        return UUID(pmatmult(self.matrix, other.matrix))
 
     def __add__(self, other):
-        """Merge with another UUIDs.
+        """Alias meaning a bounded merge with another UUID.
 
          Non commutative: a + b != b + a
-         Reversible: (a + b) - b = a
+         Invertible: (a + b) - b = a
+         Associative: (a + b) + c = a + (b + c)
          """
-        # if self.id=='ÑF39þOÉQhfÊðæ28eu8c':
-        # if other.id=='mxlÐé1uwJÞTÖ2ßRSíÊc':
-        #     raise Exception()
-        u = UUID(encrypt(msg_bytes=self.digest, key_bytes=other.digest))
-        if u == '0ÄÜûDæQÏ1ðMÜRÓóçEOy':
-            raise Exception()
-        # print(self, '+++++++++++++', other, ':', u)
-        return UUID(encrypt(msg_bytes=self.digest, key_bytes=other.digest))
+        return UUID(pmatmult(self.matrix, other.matrix))
 
     def __sub__(self, other):
-        """Unmerge from last merged UUID."""
-        if self.digest == self.null_digest:
+        """Bounded unmerge from last merged UUID."""
+        if self.matrix == self.null_matrix:
             raise Exception(f'Cannot subtract from UUID={self.null_pretty}!')
-        return UUID(decrypt(encrypted_msg=self.digest, key_bytes=other.digest))
+        return UUID(pmatmult(self.matrix, other.inv.matrix))
 
     def __str__(self):
-        return self.id
+        return self.id()
 
     __repr__ = __str__  # TODO: is this needed?
 
-
-# @dataclass(frozen=True)
-# class UUID:
-#     # TIP: Dataclass checks for equality on this field!
-#     bignumber: int = 0
-#     isnull = bignumber == 0
-#
-#     @property
-#     @lru_cache()
-#     def pretty(self):
-#         return int2pretty(self.bignumber)
-#
-#     @staticmethod
-#     def from_pretty(txt):
-#         return UUID(pretty2int(txt))
-#
-#     def __add__(self, other):
-#         """Merge with another UUIDs.
-#
-#          Non commutative: a + b != b + a
-#          Reversible: (a + b) - b = a
-#          """
-#         return UUID(rev_hash(msg_int=other.bignumber, key_int=self.bignumber))
-#
-#     def __sub__(self, other):
-#         """Unmerge from last merged UUID."""
-#         if self.bignumber == 0:
-#             raise Exception(f'Cannot subtract from UUID={self.pretty}!')
-#         return UUID(rev_unhash(=other.bignumber, key_int=self.bignumber))
-#
-#     def __str__(self):
-#         return self.pretty
-#
-#     __repr__ = __str__  # TODO: is this needed?
 
 def uuid00(bytes_content):
     return UUID(md5digest(bytes_content))
@@ -238,59 +230,6 @@ def decrypt(encrypted_msg, key_bytes):
     return cipher.decrypt(encrypted_msg)
 
 
-# def checksum(number):
-#     return number %
-
-
-# def rshift(msg_int):
-#     return (msg_int >> 1) | ((msg_int & 1) << 127)
-#
-#
-# def lshift(msg_int):
-#     return ((msg_int & mask_127ones) << 1) | (msg_int >> 127)
-#
-
-# def rev_hash(msg_int, key_int):
-#     """A *reversible* hash, the nightmare of cryptologists."""
-#     result = lshift(msg_int) ^ key_int
-#     return pepper(result)
-#
-#
-# def rev_unhash(encrypted_msg_int, key_int):
-#     xor = pepper(encrypted_msg_int) ^ key_int
-#     return rshift(xor)
-
-# def pepper(msg, index):
-#     print(bin(msg))
-#     pos = (msg >> index) & 127
-#     print(bin(pos))
-#     peppered = msg ^ (2 ** pos)
-#     print(bin(peppered))
-#     pos2 = (peppered >> index) & 127
-#     print(bin(pos2))
-#     correction = 255 ((pos ^ pos2) << index)
-#     print(bin(correction))
-#     print(bin(msg & correction))
-#     exit()
-#
-#
-# def rev_hash(msg_int, key_int):
-#     """A *reversible* hash, the nightmare of cryptologists."""
-#     xor = msg_int ^ key_int
-#     lshift = (((xor & mask_127ones) << 1) | (xor >> 127))
-#     for i in range(6):
-#         lshift = pepper(lshift, i)
-#     return lshift ^ key_int
-#
-#
-# def rev_unhash(encrypted_msg_int, key_int):
-#     xor = encrypted_msg_int ^ key_int
-#     for i in reversed(range(6)):
-#         xor = pepper(xor, i)
-#     rshift = (xor >> 1) | ((xor & 1) << 127)
-#     return rshift ^ key_int
-
-
 def pretty2bytes(digest):
     """Convert tiny string (19 chars) to bytes."""
     return dec(digest).to_bytes(16, 'big')
@@ -330,125 +269,27 @@ class CustomJSONEncoder(JSONEncoder):
         return JSONEncoder.default(self, obj)
 
 
-#
-# def tobinmats(m):
-#     int8s = np.frombuffer(m, dtype=np.uint8)
-#     ma = np.unpackbits(int8s)[:64].reshape(8, 8)
-#     mb = np.unpackbits(int8s)[64:].reshape(8, 8)
-#     return ma, mb
-#
-#
-# def e1(m, k):
-#     ma, mb = tobinmats(m)
-#     ka, kb = tobinmats(k)
-#     a = np.matmul(ma, ka)
-#     print(a)
-#     b = np.matmul(mb, kb)
-#     print(b)
-#     print(np.packbits(a))
-#     print(np.unpackbits(np.packbits(a)))
-#     return np.packbits(a) + np.packbits(b)
-#
-#
-# def e(t, k):
-#     mt = np.frombuffer(t, dtype=np.float32).reshape(2, 2)
-#     mk = np.frombuffer(k, dtype=np.float32).reshape(2, 2)
-#     mm = np.matmul(mt, mk)
-#     return mm.tobytes()
-#
-#
-# def d(t, k):
-#     mt = np.frombuffer(t, dtype=np.float32).reshape(2, 2)
-#     mk = np.frombuffer(k, dtype=np.float32).reshape(2, 2)
-#     mm = np.matmul(mt, np.linalg.inv(mk))
-#     return mm.tobytes()
-#
-#
-# k = b'1234567890123456'
-# t = b'9999999999999999'
-# print(bytes2int(t))
-#
-# en = e(t, k)
-# print(bytes2int(en))
-#
-# de = d(en, k)
-# print(bytes2int(de))
-# print()
-
-def permutmatrix2int(m):
-    """Convert permutation matrix 35x35 to number."""
-    taboo = SortedSet()
-    digits = []
-    rowid = 34
-    for bit in m[:-1]:
-        bitold = bit
-        for f in taboo:
-            if bitold >= f:
-                bit -= 1
-        taboo.add(bitold)
-        digits.append(bit)
-        rowid -= 1
-
-    big_number = digits[0]
-    pos = 0
-    base = b = 35
-    for digit in digits[1:]:
-        old = big_number
-        big_number += b * digit
-        pos += 1
-        base -= 1
-        b *= base
-
-    return big_number
 
 
-def int2permutmatrix(big_number):
-    """Convert number to permutation matrix 35x35."""
-    taboo = SortedDict()
-    res = big_number
-    base = 35
-    bit = 0
-    while base > 1:
-        res, bit = divmod(res, base)
-        if res + bit == 0:
-            bit = 0
-        for ta in taboo:
-            if bit >= ta:
-                bit += 1
-        base -= 1
-        taboo[bit] = base
-
-    for bit in range(35):
-        if bit not in taboo:
-            break
-    taboo[bit] = base - 1
-
-    return list(map(
-        itemgetter(0), sorted(taboo.items(), reverse=True, key=itemgetter(1))
-    ))
-
-
-def permmult(a, b):
+def pmatmult(a, b):
     """Multiply two permutation matrices 35x35.
      a,b: lists of positive integers and zero."""
-    c = []
-    for row in a:
-        c.append(b[-row])
-    return c
+    return [b[-row - 1] for row in a]
 
 
 def transpose(m):
     """Transpose a permutation matrix 35x35.
-     m: list of positive integers and zero."""
-    c = {}
-    idx = 0
-    for row in reversed(m):
-        c[-row] = idx
-        idx += 1
+     m: list of positive integers and zero.
 
-    return list(map(
-        itemgetter(1), sorted(c.items(), reverse=False, key=itemgetter(0))
-    ))
+     https://codereview.stackexchange.com/questions/241511/how-to-efficiently-fast-calculate-the-transpose-of-a-permutation-matrix-in-p/241524?noredirect=1#comment473994_241524
+     """
+    n = len(m)
+    tr_ls = [0] * n
+
+    for l in m:
+        tr_ls[n - 1 - m[l]] = n - 1 - l
+
+    return tr_ls
 
 
 def print_binmatrix(m):
@@ -456,25 +297,128 @@ def print_binmatrix(m):
      m: list of positive integers and zero."""
 
     for row in m:
-        print(format(2 ** row, '035b'), row)
+        print(' '.join(format(2 ** row, '035b')), row)
 
 
-# from functools import partial
-# from timeit import timeit
-# from math import factorial
+def pmatrix2int(m):
+    """Convert permutation matrix 35x35 to number."""
+    return fac2int(pmatrix2fac(m))
+
+
+def int2pmatrix(big_number):
+    """Convert number to permutation matrix."""
+    return fac2pmatrix((int2fac(big_number)))
+
+
+def pmatrix2fac(matrix):
+    """Convert permutation matrix to factoradic number."""
+    available = list(range(len(matrix)))
+    digits = []
+    for row in matrix:
+        idx = available.index(row)
+        del available[idx]
+        digits.append(idx)
+    return list(reversed(digits))
+
+
+def fac2pmatrix(digits):
+    """Convert factoradic number to permutation matrix."""
+    available = list(range(len(digits)))
+    mat = []
+    for digit in reversed(digits):
+        # print(digit, available)
+        mat.append(available.pop(digit))
+    return mat
+
+
+def int2fac(number):
+    """Convert decimal into factorial numeric system. Left-most is LSB."""
+    i = 2
+    res = [0]
+    while number > 0:
+        number, r = divmod(number, i)
+        res.append(r)
+        i += 1
+    return res
+
+
+def fac2int(digits):
+    """Convert factorial numeric system into decimal. Left-most is LSB."""
+    radix = 1
+    i = 1
+    res = 0
+    for digit in digits[1:]:
+        res += digit * i
+        i *= radix
+        radix += 1
+    return res
+
+
+from functools import partial
+from timeit import timeit
+from math import factorial, log10, log2
+
 #
-# a = int2permutmatrix(factorial(35) // 76672341)
-# b = int2permutmatrix(factorial(35) // 348765)
-# print_binmatrix(b)
-# print()
-# print_binmatrix(transpose(b))
-# print()
-# print_binmatrix(transpose(transpose(b)))
-# print()
+# a = int2pmatrix(factorial(35) // 76672341)
+b = int2pmatrix(factorial(35) // 348765)
+print_binmatrix(b)
+print()
+print_binmatrix(transpose(b))
+print()
+print_binmatrix(transpose(transpose(b)))
+print()
+
 #
-# print(timeit(partial(permmult, a, b), number=1000), 'ms')
-# print(timeit(partial(transpose, b), number=1000), 'ms')
-# print(timeit(partial(permutmatrix2int, a), number=1000), 'ms')
+# print(timeit(partial(permmult, a, b), number=10000) / 10, 'ms')
+# print(timeit(partial(transpose, b), number=10000) / 10, 'ms')
+# print(timeit(partial(pmatrix2int, a), number=10000) / 10, 'ms')
 # print(timeit(partial(
-#     int2permutmatrix, 89928374983467987
-# ), number=1000), 'ms')
+#     int2pmatrix, 89928374983467987
+# ), number=10000) / 10, 'ms')
+
+
+a = UUID(int2pmatrix(2 ** 128 - 1))
+b = UUID('1234567890123456789')
+c = UUID(0)
+print(a, b, c)
+print()
+print((a * b))
+print((a * b) * b)
+print((a * b) * b.inv())
+print((a * b) * c)
+
+
+fac = int2fac(2 ** 128 + 3214134)
+
+# s = set()
+# r = set()
+# aa = bb = 0
+# for i in range(1000000):
+#     while aa in r:
+#         aa = round(random() * 2 ** 128)
+#     while bb in r:
+#         bb = round(random() * 2 ** 128)
+#     r.add(aa)
+#     r.add(bb)
+#     a = int2pmatrix(0*aa)
+#     b = int2pmatrix(bb)
+#     n = pmatrix2int(pmatmult(a, b))
+#     s.add(n)
+#     if i > len(s) - 1:
+#         print(i, a, b, n)
+#         break
+
+# def f():
+#     return pmatrix2int(int2pmatrix(2 ** 128 + 234324234))
+#
+#
+# print(timeit(f, number=1000000), 'us')
+
+def f():
+    a = UUID(int2pmatrix(2 ** 128 - 1))
+    b = UUID('1234567890123456789')
+    (a * b) * b.inv()
+
+# print(pmatrix2int(int2pmatrix(1212000002222235554)))
+
+print(timeit(f, number=10000) * 100, 'us')
