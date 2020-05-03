@@ -97,7 +97,7 @@ def enc(big_number, alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     24 28
     41 24 # reducing from 32 to 24 is kind of a improvement
     48 23
-    57 22
+    57 22 # possible to type with an US keyboard
     69 21
     85 20 # base64 library provides base85, but it is not double_click_friendly
     107 19 # super friendly (our default choice)
@@ -129,6 +129,9 @@ def enc(big_number, alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     gnome-terminal/terminator/intellij without _ and some twin chars (107)
 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
 ÁÂÄÅÆÉÊËÍÎÏÐÑÓÔÖÚÛÜÝÞßáâäåæçéêëíîïðñóôöøúûüýþ
+
+    typeable and double-clickable (63)
+0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz
 
     :param alphabet: string with allowed digits
     :param big_number: an integer, usually a big MD5-like one
