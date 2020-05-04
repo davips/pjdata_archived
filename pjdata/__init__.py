@@ -1,2 +1,3 @@
+""" Main module of pjdata
+"""
 from ._version import __version__  # noqa: ignore
-PRETTY_PRINTING = True
