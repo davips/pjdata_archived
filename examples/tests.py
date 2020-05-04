@@ -3,4 +3,6 @@
 # global handler
 from pjdata.util import gl_config, ls_gl_config
 print(ls_gl_config())
-gl_config(pretty_printing=True, does_nothing=False)
+print(ls_gl_config(True))
+gl_config(pretty_printing=False, does_nothing=True)
+print(ls_gl_config(True))
