@@ -1,24 +1,24 @@
+"""Mixin class for printing components."""
 import json
-
-from pjdata import PRETTY_PRINTING  # Needed despite IDE warnings!
+from pjdata import glconfig
 
 
 def enable_global_pretty_printing():
-    global PRETTY_PRINTING
-    PRETTY_PRINTING = True
+    """Enable globally the pretty-printing."""
+    glconfig.PRETTY_PRINTING = True
 
 
 def disable_global_pretty_printing():
-    global PRETTY_PRINTING
-    PRETTY_PRINTING = False
-    print('Pretty printing disabled!')
+    """Disable globally the pretty-printing."""
+    glconfig.PRETTY_PRINTING = False
 
 
 class Printable:
-
+    """Mixin class for printing
+    """
     def __init__(self, jsonable):
         self.jsonable = jsonable
-        self.pretty_printing = PRETTY_PRINTING
+        self.pretty_printing = glconfig.PRETTY_PRINTING
 
     def enable_pretty_printing(self):
         self.pretty_printing = True
