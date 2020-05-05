@@ -1,6 +1,10 @@
 """This module keep util function used in pjdata."""
+import importlib
 import warnings
-import pjdata.glconfig as mconfig
+from typing import List, Dict, Union, Any
+
+# importing the module that contains the global variables.
+GLOBAL_VARS_MODULE = importlib.import_module("pjdata.glconfig")
 
 
 def gl_config(**kwargs):
@@ -16,25 +20,27 @@ def gl_config(**kwargs):
     Use 'ls_gl_config()' to see all global variables available.
     For more information see `global_configuration_handler`.
     """
-    global_configuration_handler(module=mconfig, **kwargs)
+    global_configuration_handler(module=GLOBAL_VARS_MODULE, **kwargs)
 
 
-def ls_gl_config(show_values: bool = False):
+def ls_gl_config(show_values: bool = False) -> Union[List[str], Dict[str, Any]]:
     """List global variables from `glconfig` module.
 
     Notes
     -----
     See `ls_global_configuration_handler` for more information.
     """
-    return ls_global_configuration_handler(mconfig, show_values)
+    return ls_global_configuration_handler(GLOBAL_VARS_MODULE, show_values)
 
 
-def ls_global_configuration_handler(module, show_values=False):
+def ls_global_configuration_handler(
+        module: str,
+        show_values: bool = False) -> Union[List[str], Dict[str, Any]]:
     """List global variables from a givem module.
 
     Parameters
     ----------
-    module : module
+    module
         A python module.
 
     show_values : bool
@@ -43,10 +49,9 @@ def ls_global_configuration_handler(module, show_values=False):
 
     Returns
     -------
-    list
+    list, dict
         When `show_values=False`, a list with the global variable names.
-    dict
-        When `show_values=True` a dict with global variable names and values.
+        When `show_values=True`, a dict with global variable names and values.
 
     Notes
     -----
@@ -58,7 +63,7 @@ def ls_global_configuration_handler(module, show_values=False):
     return [item for item in module.__dict__.keys() if item.isupper()]
 
 
-def global_configuration_handler(module, **kwargs):
+def global_configuration_handler(module: str, **kwargs):
     """Handle global variables values.
 
     Parameters
