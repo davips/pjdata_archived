@@ -134,8 +134,8 @@ def enc(big_number, alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     l = len(alphabet)
     res = []
     while True:
-        res.append(alphabet[big_number % l])
-        big_number = big_number // l
+        big_number, rem = divmod(big_number, l)
+        res.append(alphabet[rem])
         if big_number == 0:
             break
     return ''.join(res)[::-1]
