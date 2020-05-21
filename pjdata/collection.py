@@ -98,7 +98,7 @@ class Collection(AbstractData):
         self.next_index += 1
         return nex
 
-    def _uuid_impl00(self):
+    def _uuid_impl(self):
         return self._uuid
 
     # Collection not hashable! That's why we memoize it by hand here.
