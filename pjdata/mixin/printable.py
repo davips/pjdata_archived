@@ -54,5 +54,6 @@ class Printable:
                             sort_keys=False, indent=4, ensure_ascii=False)
         return js_str.replace('\n', '\n' + depth)
 
-    def __repr__(self):
-        return 'Object: ' + super().__repr__() + '\nContent:' + str(self)
+    __repr__ = __str__
+    # def __repr__(self):
+    #     return 'Object: ' + super().__repr__() + '\nContent:' + str(self)
