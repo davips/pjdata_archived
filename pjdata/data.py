@@ -330,6 +330,13 @@ class Data(AbstractData, LinAlgHelper, Printable):
 
         return uuid, uuids
 
+    # It does not work because of __hash__
+    # def __eq__(self, other):
+    #     """Overrides the default implementation"""
+    #     if isinstance(other, Data):
+    #         return self.uuid00 == other.uuid00
+    #     return False
+
 
 class MissingField(Exception):
     pass
