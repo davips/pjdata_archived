@@ -29,7 +29,7 @@ class Collection(AbstractData):
         The user can set a dataset if convenient.
     """
 
-    def __init__(self, history, failure, original_data, uuid):
+    def __init__(self, history, failure, original_data, uuid, fields=None):
         if uuid is None:
             raise Exception('Collection child classes should be instantiated'
                             ' by experts only!')
@@ -40,8 +40,9 @@ class Collection(AbstractData):
         self.original_data = original_data
         self._allfrozen = None
         self._uuid = uuid
+        self.fields = {} if fields is None else fields
 
-    def updated(self, transformations, datas=None, failure='keep'):
+    def updated(self, transformations, datas=None, failure='keep', fields=None):
         """Recreate Collection object with updated history, failure and datas.
 
         Parameters
@@ -69,6 +70,9 @@ class Collection(AbstractData):
                 )
             datas = self._datas
 
+        if fields is None:
+            fields = self.fields
+
         # TODO: to require changes on Xt and Xd when X is changed.
 
         # Update UUID.
@@ -82,7 +86,8 @@ class Collection(AbstractData):
             history=self.history + transformations,
             failure=failure,
             original_data=self.original_data,
-            uuid=new_uuid
+            uuid=new_uuid,
+            fields=fields
         )
 
     def __iter__(self):

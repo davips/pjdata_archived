@@ -5,8 +5,8 @@ class FiniteCollection(Collection):
     from pjdata.specialdata import NoData
 
     def __init__(self, datas, history=None, failure=None, original_data=NoData,
-                 uuid=None):
-        super().__init__(history, failure, original_data, uuid)
+                 uuid=None, fields=None):
+        super().__init__(history, failure, original_data, uuid, fields)
         self._datas = datas
         self.size = len(datas)
         self.has_nones = not all(datas)
