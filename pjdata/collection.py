@@ -3,6 +3,7 @@ from functools import lru_cache
 from typing import Iterator
 
 from pjdata.abc.abstractdata import AbstractData
+from pjdata.mixin.linalghelper import evolve
 
 
 class Collection(AbstractData):
@@ -76,9 +77,7 @@ class Collection(AbstractData):
         # TODO: to require changes on Xt and Xd when X is changed.
 
         # Update UUID.
-        new_uuid = self.uuid00
-        for transformation in transformations:
-            new_uuid += transformation.uuid00
+        new_uuid = evolve(self.uuid, transformations)
 
         from pjdata.finitecollection import FiniteCollection
         return FiniteCollection(
@@ -104,7 +103,7 @@ class Collection(AbstractData):
         self.next_index += 1
         return nex
 
-    def _uuid_impl00(self):
+    def _uuid_impl(self):
         return self._uuid
 
     # Collection not hashable! That's why we memoize it by hand here.

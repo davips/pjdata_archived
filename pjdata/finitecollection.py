@@ -20,16 +20,16 @@ class FiniteCollection(Collection):
 
         # Undo dropped transformations.
         history = self.history[:-drop]
-        uuid = self.uuid00
+        uuid = self.uuid
         for transformation_to_discard in reversed(self.history[-drop:]):
-            uuid -= transformation_to_discard.uuid00
+            uuid /= transformation_to_discard.uuid
 
         return FiniteCollection(
             self._datas,
-            history=history + [transformation],
+            history=history + tuple([transformation]),
             failure=self.failure,
             original_data=self.original_data,
-            uuid=uuid + transformation.uuid00
+            uuid=uuid * transformation.uuid
         )
 
     def __str__(self):

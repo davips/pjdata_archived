@@ -1,54 +1,23 @@
-from dataclasses import dataclass, field
+import json
 from functools import lru_cache
-
-import numpy as np
+from typing import Optional, Any
 
 from pjdata.abc.abstractdata import AbstractData
 from pjdata.aux.compression import pack
-from pjdata.aux.encoders import UUID
+from pjdata.aux.customjsonencoder import CustomJSONEncoder
+from pjdata.aux.uuid import UUID
+from pjdata.config import Global
 from pjdata.mixin.linalghelper import LinAlgHelper
 from pjdata.mixin.printable import Printable
 
 
-def evolve(uuid, transformations):
-    for transformation in transformations:
-        uuid += transformation.uuid00
-    return uuid
-
-
-def data(**matrices):  # new()?
-    # Intended for Data and matrices created directly by the user.
-    # self.history = []
-    # self._uuid = UUID()
-    #
-    # # Calculate unique hash for the matrices.
-    # packs = ''.encode()
-    # for mat in matrices:
-    #     packs += pack_data(mat)  # TODO: store uuids for each matrix
-    # matrices_hexhash = hexuuid(packs)
-    # matrices_hash = tiny_md5(matrices_hexhash)
-    #
-    # if 'nam-e' in matrices:
-    #     matrices['name'] += '_' + matrices_hash[:6]
-    #
-    # class New:
-    #     """Fake New transformer."""
-    #     name = 'New'
-    #     path = 'pjml.tool.data.flow.new'
-    #     uuid = matrices_hash
-    #     hexuuid = matrices_hexhash
-    #     config = matrices
-    #     jsonable = {'_id': f'{name}@{path}', 'config': config}
-    #     serialized = serialize(jsonable)
-    #
-    # transformer = New()
-    # # New transformations are always represented as 'u', no matter
-    # # which step.
-    # transformation = Transformation(transformer, 'u')
-    # history = [transformation]
-
-    # return Data()
-    pass
+# Terminology:
+# history -> Data events since birth
+# transformations -> new Data events, or from some point in history
+#  (both are lists of Transformers)
+#
+# matrix -> 2D numpy array
+# field -> matrix, vector or scalar  (numpy views for easy handling)
 
 
 class Data(AbstractData, LinAlgHelper, Printable):
@@ -56,7 +25,7 @@ class Data(AbstractData, LinAlgHelper, Printable):
 
     Attributes
     ----------
-    matrices
+    fields
         A dictionary, like {X: <numpy array>, Y: <numpy array>}.
         Matrix names should start with an uppercase letter and
         have at most two letters.
@@ -66,7 +35,7 @@ class Data(AbstractData, LinAlgHelper, Printable):
 
     Parameters
     ----------
-    matrices
+    fields
         A dictionary like {X: <numpy array>, Y: <numpy array>}.
         Matrix names should have a single uppercase character, e.g.:
         X=[
@@ -88,68 +57,45 @@ class Data(AbstractData, LinAlgHelper, Printable):
         Yt=[['rabbit', 'mouse']]
     """
 
-    # Some mappings from vector/scalar to the matrix where it is stored.
-    _vec2mat_map = {i: i.upper() for i in ['y', 'z', 'v', 'w']}
-    _sca2mat_map = {i: i.upper() for i in ['r', 's', 't']}
-
-    def __init__(self, uuid, uuids, history, failure, frozen,
-                 storage=None, **matrices):
-        kwargs = matrices
-        super().__init__(jsonable=kwargs)
+    def __init__(self, history, failure, frozen, hollow, storage_info=None,
+                 **matrices):
+        super().__init__(jsonable=matrices)
         # TODO: Check if types (e.g. Mt) are compatible with values (e.g. M).
-
-        # Separate matrices from the rest of kwargs ('name', 'desc' etc.).
-        # TODO: what to do with info? 'name' and 'desc'?
-        matrices = {}
-        info = {}
-        for k, v in kwargs.items():
-            if len(k) < 3:
-                matrices[k] = v
-            else:
-                info[k] = v
+        # TODO: what to do with extra info? 'name' and 'desc'?
+        #  Do they go to another arg or to a matrix? Are they necessary?
 
         self.history = history
-        self._uuid = uuid
-        self.uuids = uuids
         self.failure = failure
-        self.storage = storage
-        self.matrices = matrices
         self.isfrozen = frozen
-        self._fields = matrices.copy()
+        self.ishollow = hollow
+        self.storage_info = storage_info
+        self.matrices = matrices
 
-        # Add vector shortcuts.
-        for k, v in self._vec2mat_map.items():
-            if v in matrices and (
-                    matrices[v].shape[0] == 1 or matrices[v].shape[1] == 1):
-                self._fields[k] = self._matrix_to_vector(matrices[v])
+        # Calculate UUIDs.
+        self._uuid, self.uuids = self._evolve_id(UUID(), {}, history, matrices)
 
-        # Add scalar shortcuts.
-        for k, v in self._sca2mat_map.items():
-            if v in matrices and matrices[v].shape == (1, 1):
-                self._fields[k] = self._matrix_to_scalar(matrices[v])
-
-    def updated(self, transformations, failure='keep', frozen='keep',
+    def updated(self, transformations,
+                failure: bool = 'keep',
+                frozen: bool = 'keep',
+                hollow: bool = 'keep',
                 **fields):
-        """Recreate Data object with updated matrices, history and failure.
+        """Recreate or freeze a Data object with updated matrices, history and
+        failure.
 
         Parameters
         ----------
         frozen
+            Where the resulting Data object should be frozen.
         transformations
             List of Transformation objects.
         failure
-            The failure caused by the given transformation, if it failed.
+            The failure caused by the given transformations, if it failed.
             'keep' (recommended, default) = 'keep this attribute unchanged'.
             None (unusual) = 'no failure', possibly overriding previous failures
         fields
             Changed/added matrices and updated values.
-
-        dataset
-            Original dataset where data was extract from.
-        history
+        transformations
             History object of transformations.
-        failure
-            The cause, when the provided history leads to a failure.
 
         Returns
         -------
@@ -161,34 +107,71 @@ class Data(AbstractData, LinAlgHelper, Printable):
             failure = self.failure
         if frozen == 'keep':
             frozen = self.isfrozen
+        if hollow == 'keep':
+            hollow = self.ishollow
 
-        # Translate shortcuts.
         matrices = self.matrices.copy()
-        for name, value in fields.items():
-            new_name, new_value = Data._translate(name, value)
-            matrices[new_name] = new_value
+        matrices.update(self._fields2matrices(fields))
 
-        uuid, uuids = Data._evolve(self, transformations, matrices, fields)
-
+        # klass can be Data or Collection.
         klass = Data if self is NoData else self.__class__
         return klass(
-            uuid=uuid, uuids=uuids, history=self.history + transformations,
-            failure=failure, frozen=frozen, **matrices
+            history=tuple(self.history) + transformations,
+            failure=failure, frozen=frozen, hollow=hollow,
+            storage_info=self.storage_info, **matrices
         )
 
-    def field(self, name, component=None):
-        name = self._check_unsafe_access(name)
-        if name not in self._fields:
-            name = component.name if 'name' in dir(component) else component
+    @property
+    @lru_cache()
+    def frozen(self):
+        """frozen faz dois papéis:
+            1- pipeline precoce (p. ex. após SVM.enhance)
+            2- pipeline falho (após exceção)
+        um terceiro papel não pode ser feito por ele, pois frozen é uma
+        propriedade armazenável de Data:
+            3- hollow = mockup p/ ser preenchido pelo cururu
+         """
+        return self.updated(transformations=tuple(), frozen=True)
+
+    @lru_cache()
+    def hollow(self: Any, transformations):
+        """temporary hollow (only Persistence can fill it)         """
+        return self.updated(transformations=transformations, hollow=True)
+
+    @lru_cache()
+    def field(self, name, component='undefined'):
+        """Safe access to a field, with a friendly error message."""
+        name = self._remove_unsafe_prefix(name)
+        mname = name.upper() if len(name) == 1 else name
+
+        # Check existence of the field.
+        if mname not in self.matrices:
+            comp = component.name if 'name' in dir(component) else component
             raise MissingField(
-                f'\n=================================================\n'
-                f'Last transformation:\n{self.history.last} ... \n'
-                f' Data object <{self}>\n'
-                f' last transformed by '
-                f'{self.history.last and self.history.last.name} does '
-                f'not provide field\n {name} needed by {name} .\n'
-                f'Available fields: {list(self._fields.keys())}')
-        return self._fields[name]
+                f'\n\nLast transformation:\n{self.history[-1]} ... \n'
+                f' Data object <{self}>...\n'
+                f'...last transformed by '
+                f'{self.history[-1] and self.history[-1].name} does not '
+                f'provide field {name} needed by {comp} .\n'
+                f'Available matrices: {list(self.matrices.keys())}')
+
+        m = self.matrices[mname]
+
+        # Fetch from storage if needed.
+        if isinstance(m, UUID):
+            if self.storage_info is None:
+                raise Exception('Storage not set! Unable to fetch ' + m.id)
+            print('>>>> fetching field', name, m.id)
+            self.matrices[mname] = m = self._fetch_matrix(m.id)
+
+        if not name.islower():
+            return m
+
+        if name in ['r', 's']:
+            return self._mat2sca(m)
+
+        if name in ['y', 'z']:
+            return self._mat2vec(m)
 
     @property
     @lru_cache()
@@ -196,9 +179,8 @@ class Data(AbstractData, LinAlgHelper, Printable):
         return self.field('X'), self.field('y')
 
     @property
-    @lru_cache()
-    def field_names(self):
-        return list(self._fields.keys())
+    def allfrozen(self):
+        return False
 
     @property
     @lru_cache()
@@ -207,23 +189,18 @@ class Data(AbstractData, LinAlgHelper, Printable):
 
     @property
     @lru_cache()
-    def matrix_names_str(self):
-        return ','.join(self.matrix_names)
+    def ids_lst(self):
+        return [self.uuids[name].id for name in self.matrix_names]
 
     @property
     @lru_cache()
-    def field_names_str(self):
-        return ','.join(self.field_names)
-
-    @property
-    @lru_cache()
-    def uuids_str(self):
-        return ','.join(u.id for u in self.uuids.values())
+    def ids_str(self):
+        return ','.join(self.ids_lst)
 
     @property
     @lru_cache()
     def history_str(self):
-        return ','.join(transf.uuid00.id for transf in self.history)
+        return ','.join(transf.uuid.id for transf in self.history)
 
     @lru_cache()
     def field_dump(self, name):
@@ -233,102 +210,41 @@ class Data(AbstractData, LinAlgHelper, Printable):
 
     @property
     @lru_cache()
-    def frozen(self):
-        return self.updated(transformations=[], frozen=True)
+    def matrix_names_str(self):
+        return ','.join(self.matrix_names)
 
-    @property
-    def allfrozen(self):
-        return False
+    @lru_cache()
+    def _fetch_matrix(self, id):
+        if self.storage_info is None:
+            raise Exception(f'There is no storage set to fetch {id})!')
+        return Global['storages'][self.storage_info].fetch_matrix(id)
 
-    def mockup(self, transformations):
-        """A tentative Data object, i.e. with a history ahead of its matrices.
-        Usefull to anticipate the outcome (uuid/uuids) of a Pipeline
-         (e.g. to allow Cache fetching)."""
-        from pjdata.specialdata import MockupData
-
-        # TODO: see TODO in init
-        # if 'name' in self.matrices:
-        #     kwargs['name'] = self.name
-        # if 'desc' in self.matrices:
-        #     kwargs['desc'] = self.desc
-
-        new_uuid, new_uuids = self._evolve(transformations)
-        return MockupData(uuid=new_uuid, uuids=new_uuids,
-                          history=self.history + transformations,
-                          failure=self.failure, frozen=self.isfrozen,
-                          **self.matrices)
-
-    def _uuid_impl00(self):
-        return self._uuid
-
-    @classmethod
-    def _translate(cls, field_name, value):
-        """Given a field name, return its underlying matrix name and content.
-        """
-        if field_name in cls._vec2mat_map:
-            # Vector.
-            return field_name.upper(), cls._as_column_vector(value)
-        elif field_name in cls._sca2mat_map:
-            # Scalar.
-            return field_name.upper(), np.array(value, ndmin=2)
-        else:
-            # Matrix given directly.
-            return field_name, value
-
-    def _check_unsafe_access(self, item):
+    def _remove_unsafe_prefix(self, item):
         """Handle unsafe (i.e. frozen) fields."""
         if item.startswith('unsafe'):
+            # User knows what they are doing.
             return item[6:]
 
-        if self.isfrozen and len(item) < 3:
+        if self.isfrozen or self.ishollow:
             raise Exception('Cannot access fields from Data objects that come '
-                            f'from a failed pipeline!\nHINT: use unsafe{item}.'
+                            f'from a failed/frozen/hollow pipeline!\n'
+                            f'HINT: use unsafe{item}.'
                             f'\nHINT2: probably an ApplyUsing is missing, '
                             f'around a Predictor.')
         return item
 
+    def _uuid_impl(self):
+        return self._uuid
+
     def __getattr__(self, item):
-        """Intercept any call to matrices to fetch them if needed."""
-        # TODO: decide what to do with nonmatricial fields like name, desc etc.
-        item = self._check_unsafe_access(item)
+        """Create shortcuts to fields, still passing through sanity check."""
+        if item == 'Xy':
+            return self.Xy
+        if 0 < (len(item) < 3 or item.startswith('unsafe')):
+            return self.field(item, '[direct access through shortcut]')
 
-        if (len(item) > 2 and not item.startswith('unsafe')) or item == 'Xy':
-            return super().__getattribute__(item)
-
-        if item in self._fields:
-            return self._fields[item]
-        else:
-            if self.storage is None:
-                raise MissingField(f'Field {item} not found!')
-            return self.fetch_matrix(item)
-
-    @lru_cache()
-    def fetch_matrix(self, name):
-        if self.storage is None:
-            raise Exception(f'There is no storage set to fetch {name})!')
-        return self.storage.fetch_matrix(self.field(name))
-
-    def _evolve(self, transformations, new_matrices=None, fields=None):
-        if new_matrices is None:
-            new_matrices = self.matrices
-        if fields is None:
-            fields = self.matrices
-
-        # Update UUID digests.
-        uuids = {}
-        for matrix_name in new_matrices:
-            # If it is a new matrix, assign '0000000000000000000'.
-            muuid = self.uuids.get(matrix_name, UUID())
-
-            # Transform new fields' UUID.
-            if matrix_name in fields:
-                muuid = evolve(muuid, transformations)
-            uuids[matrix_name] = muuid
-
-        # Update UUID.
-        uuid = evolve(self.uuid00, transformations)
-
-        return uuid, uuids
+        # print('just curious...', item)
+        return super().__getattribute__(item)
 
     # It does not work because of __hash__
     # def __eq__(self, other):

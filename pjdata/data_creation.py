@@ -6,10 +6,10 @@ import numpy as np
 import pandas as pd
 import sklearn.datasets as ds
 
-from pjdata.aux import encoders
 from pjdata.aux.compression import pack
-from pjdata.aux.encoders import md5digest, digest2pretty, UUID
+from pjdata.aux.encoders import md5_int, enc
 from pjdata.aux.serialization import serialize
+from pjdata.aux.uuid import UUID
 from pjdata.data import Data
 from pjdata.step.transformation import Transformation
 
@@ -64,15 +64,15 @@ def read_arff(filename, description='No description.'):
 
     # Calculate pseudo-unique hash for X and Y, and a pseudo-unique name.
     uuids = {
-        'X': UUID(md5digest(pack(X))), 'Y': UUID(md5digest(pack(Y))),
-        'Xd': UUID(md5digest(pack(Xd))), 'Yd': UUID(md5digest(pack(Yd))),
-        'Xt': UUID(md5digest(pack(Xt))), 'Yt': UUID(md5digest(pack(Yt)))
+        'X': UUID(pack(X)), 'Y': UUID(pack(Y)),
+        'Xd': UUID(pack(Xd)), 'Yd': UUID(pack(Yd)),
+        'Xt': UUID(pack(Xt)), 'Yt': UUID(pack(Yt))
     }
-    hashes = {k: v.id for k, v in uuids.items()}
+    original_hashes = {k: v.id for k, v in uuids.items()}
     clean = filename.replace('.ARFF', '').replace('.arff', '')
     splitted = clean.split('/')
-    digest = md5digest(serialize(hashes).encode())
-    name_ = splitted[-1] + '_' + digest2pretty(digest)[:6]
+    name_ = splitted[-1] + '_' + enc(
+        md5_int(serialize(original_hashes).encode()))[:6]
 
     # Generate the first transformation of a Data object: being born.
     class FakeFile:
@@ -82,19 +82,19 @@ def read_arff(filename, description='No description.'):
             'name': filename.split('/')[-1],
             'path': '/'.join(splitted[:-1]) + '/',
             'description': description,
-            'hashes': hashes
+            'hashes': original_hashes
         }
         jsonable = {'_id': f'{name}@{path}', 'config': config}
         serialized = serialize(jsonable)
-        uuid00 = encoders.uuid00(serialized.encode())
+        uuid = UUID(serialized.encode())
 
     transformer = FakeFile()
     # File transformations are always represented as 'u', no matter which step.
     transformation = Transformation(transformer, 'u')
-    return Data(uuid=UUID() + transformation.uuid00, uuids=uuids,
-                history=[transformation], failure=None, frozen=False,
-                X=X, Y=Y, Xt=Xt, Yt=Yt, Xd=Xd, Yd=Yd,
-                name=name_, desc=description)
+    return original_hashes, Data(history=[transformation],
+                                 failure=None, frozen=False, hollow=False,
+                                 X=X, Y=Y, Xt=Xt, Yt=Yt, Xd=Xd, Yd=Yd)
+    # name=name_, desc=description)  #  <- TODO
 
 
 def translate_type(name):

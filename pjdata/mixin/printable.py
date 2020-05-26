@@ -35,7 +35,7 @@ class Printable:
         # pylint: disable=import-outside-toplevel
         from pjdata.step.transformation import Transformation
         # pylint: disable=import-outside-toplevel
-        from pjdata.aux.encoders import CustomJSONEncoder
+        from pjdata.aux.customjsonencoder import CustomJSONEncoder
 
         # TODO: is Transformation still used?
         if isinstance(self, Transformation):

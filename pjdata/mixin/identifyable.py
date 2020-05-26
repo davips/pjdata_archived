@@ -5,7 +5,7 @@ from functools import lru_cache
 class Identifyable(ABC):
     @property
     @lru_cache()
-    def uuid00(self):
+    def uuid(self):
         """Lazily calculated unique identifier for this dataset.
 
         Should be accessed direct as a class member: 'uuid'.
@@ -14,26 +14,36 @@ class Identifyable(ABC):
         -------
             A unique identifier UUID object.
         """
-        from pjdata.aux.encoders import uuid00, UUID
-        content = self._uuid_impl00()
+        from pjdata.aux.uuid import UUID
+        content = self._uuid_impl()
         if isinstance(content, UUID):
             return content
         else:
-            return uuid00(content.encode())
+            return UUID(content.encode())
 
     @property
     @lru_cache()
-    def sid(self):
+    def id(self):
         """
         Short uuID
         First 8 chars of uuid, usually for printing purposes.
         First collision expect after 12671943 combinations.
         :return:
         """
-        return self.uuid00.id[:8]
+        return self.uuid.id
+
+    @property
+    @lru_cache()
+    def sid(self):
+        """
+        Short uuID
+        First 6 chars of uuid, usually for printing purposes.
+        :return:
+        """
+        return self.id[:6]
 
     @abstractmethod
-    def _uuid_impl00(self):
+    def _uuid_impl(self):
         """Specific internal calculation made by each child class.
 
         Should return a string or a UUID object to be used directly."""
