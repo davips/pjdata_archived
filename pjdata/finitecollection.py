@@ -26,7 +26,7 @@ class FiniteCollection(Collection):
 
         return FiniteCollection(
             self._datas,
-            history=history + [transformation],
+            history=history + tuple([transformation]),
             failure=self.failure,
             original_data=self.original_data,
             uuid=uuid * transformation.uuid
