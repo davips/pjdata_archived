@@ -1,9 +1,12 @@
+""" Identifyable Module. """
 from abc import ABC, abstractmethod
 from functools import lru_cache
 
 
 class Identifyable(ABC):
-    @property
+    """ Identifyable mixin. """
+
+    @property  # type: ignore
     @lru_cache()
     def uuid(self):
         """Lazily calculated unique identifier for this dataset.
@@ -14,14 +17,15 @@ class Identifyable(ABC):
         -------
             A unique identifier UUID object.
         """
+        # pylint: disable=import-outside-toplevel
         from pjdata.aux.uuid import UUID
+
         content = self._uuid_impl()
         if isinstance(content, UUID):
             return content
-        else:
-            return UUID(content.encode())
+        return UUID(content.encode())
 
-    @property
+    @property  # type: ignore
     @lru_cache()
     def id(self):
         """
@@ -32,7 +36,7 @@ class Identifyable(ABC):
         """
         return self.uuid.id
 
-    @property
+    @property  # type: ignore
     @lru_cache()
     def sid(self):
         """
@@ -47,4 +51,3 @@ class Identifyable(ABC):
         """Specific internal calculation made by each child class.
 
         Should return a string or a UUID object to be used directly."""
-        pass
