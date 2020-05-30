@@ -7,9 +7,7 @@ from pjdata.specialdata import NoData
 
 
 class Collection:
-    """
-
-    Evidently, a iterator cannot be shared between Collection objects!
+    """ Evidently, a iterator cannot be shared between Collection objects!
     """
     isfrozen = False
 
