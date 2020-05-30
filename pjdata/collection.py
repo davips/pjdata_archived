@@ -18,7 +18,7 @@ class Collection:
             iterator: Iterator,
             finalizer: Callable[[Any], Data],
             finite: bool = True,
-            debug_info: Optional[bool] = None
+            debug_info: Optional[str] = None
     ):
         # TODO: it is possible to restart a collection, but I am not sure it
         #  has any use.
@@ -29,7 +29,7 @@ class Collection:
         self.finite: bool = finite
         self._last_args: tuple = ()
         self._finished: bool = False
-        self.debug_info: Optional[bool] = debug_info
+        self.debug_info: Optional[str] = debug_info
 
     def __iter__(self):
         return self
