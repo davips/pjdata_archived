@@ -1,31 +1,33 @@
 from dataclasses import dataclass
 from functools import lru_cache
-from itertools import cycle
+from typing import Optional, Iterator, Callable, Union, Any
 
-# class End(type):
-#     pass
 from pjdata.data import Data
 from pjdata.specialdata import NoData
 
 
 class Collection:
-    """
-
-    Evidently, a iterator cannot be shared between Collection objects!
+    """ Evidently, a iterator cannot be shared between Collection objects!
     """
     isfrozen = False
 
-    def __init__(self, iterator, finalizer, finite=True, debug_info=None):
+    def __init__(
+            self,
+            iterator: Iterator,
+            finalizer: Callable[[Any], Data],
+            finite: bool = True,
+            debug_info: Optional[str] = None
+    ):
         # TODO: it is possible to restart a collection, but I am not sure it
         #  has any use.
         #  if finite:
         #     iterator = cycle(chain(iterator, (x for x in [End])))
-        self.iterator = iterator
-        self.finalizer = finalizer
-        self.finite = finite
-        self._last_args = ()
-        self._finished = False
-        self.debug_info = debug_info
+        self.iterator: Iterator = iterator
+        self.finalizer: Callable[[Any], Data] = finalizer
+        self.finite: bool = finite
+        self._last_args: tuple = ()
+        self._finished: bool = False
+        self.debug_info: Optional[str] = debug_info
 
     def __iter__(self):
         return self
@@ -52,20 +54,21 @@ class Collection:
             self._finished = True
             raise e from None
 
-    @property
+    @property  # type: ignore
     @lru_cache()
-    def data(self):
-        self.debug('asks for pendurado... Tipo:', type(self._last_args),
+    def data(self) -> Data:
+        self.debug('asks for pendurado... Tipo:', str(type(self._last_args)),
                        'Parametros:', self._last_args)
         self._check_consumption()
         result = self.finalizer(*self._last_args)
         self.debug('...got pendurado.')
         return result
 
-    @property
-    @lru_cache()
-    def uuid(self):
-        return self.data.uuid
+    # Onde o data está sendo criado?
+    # @property  # type: ignore
+    # @lru_cache()
+    # def uuid(self) -> str:
+    #     return self.data.uuid
 
     def _check_consumption(self):
         if self.finite and not self._finished:
@@ -77,34 +80,19 @@ class Collection:
             except StopIteration as e:
                 pass
 
-    # def join(self):
-    #     """Call this when this is a twin of an ended iterator."""
-    #     # TODO: smells like gambiarra
-    #     self._finished = True
-    #     try:
-    #         next(self)
-    #         next(self.iterator)
-    #     except:
-    #         pass
-
-    def debug(self, *msg):
+    def debug(
+            self,
+            *msg: Union[tuple, str]
+    ) -> None:
         if self.debug_info:
             print(self.debug_info, '>>>', *msg)
-
-    # @property
-    # def allfrozen(self):
-    #     raise Exception('não sabemos se será preciso!')
-    #
-
-    # def restart(self):
-    #     pass
 
 
 @dataclass(frozen=True)
 class AccResult:
     """Accumulator for iterators that send args to finalizer()."""
-    value: Data = NoData
-    acc: list = None
+    value: Optional[Union[NoData, Data]] = None
+    acc: Optional[list] = None
 
     @property
     def both(self):
