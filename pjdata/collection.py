@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Optional, Iterator, Callable, Union, Any
 
-from pjdata.data import Data
-from pjdata.specialdata import NoData
+import pjdata.data as d
+import pjdata.specialdata as s
 
 
 class Collection:
@@ -14,7 +14,7 @@ class Collection:
     def __init__(
             self,
             iterator: Iterator,
-            finalizer: Callable[[Any], Data],
+            finalizer: Callable[[Any], d.Data],
             finite: bool = True,
             debug_info: Optional[str] = None
     ):
@@ -23,7 +23,7 @@ class Collection:
         #  if finite:
         #     iterator = cycle(chain(iterator, (x for x in [End])))
         self.iterator: Iterator = iterator
-        self.finalizer: Callable[[Any], Data] = finalizer
+        self.finalizer: Callable[[Any], d.Data] = finalizer
         self.finite: bool = finite
         self._last_args: tuple = ()
         self._finished: bool = False
@@ -56,9 +56,9 @@ class Collection:
 
     @property  # type: ignore
     @lru_cache()
-    def data(self) -> Data:
+    def data(self) -> d.Data:
         self.debug('asks for pendurado... Tipo:', str(type(self._last_args)),
-                       'Parametros:', self._last_args)
+                   'Parametros:', self._last_args)
         self._check_consumption()
         result = self.finalizer(*self._last_args)
         self.debug('...got pendurado.')
@@ -91,7 +91,7 @@ class Collection:
 @dataclass(frozen=True)
 class AccResult:
     """Accumulator for iterators that send args to finalizer()."""
-    value: Optional[Union[NoData, Data]] = None
+    value: Optional[Union[d.Data, s.NoData]] = None
     acc: Optional[list] = None
 
     @property

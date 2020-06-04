@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 from functools import lru_cache
 from typing import Any, Tuple, Optional, Union
 
+import pjdata.specialdata as s
 from pjdata.aux.compression import pack
 from pjdata.aux.uuid import UUID
 from pjdata.config import STORAGE_CONFIG
@@ -71,10 +74,13 @@ class Data(Identifyable, LinAlgHelper, Printable):
         # Calculate UUIDs.
         self._uuid, self.uuids = self._evolve_id(UUID(), {}, history, matrices)
 
-    def updated(self: TDatas, transformers: Tuple[Transformer],
+    def updated(self: Union[s.NoData, Data],
+                transformations,
                 failure: Optional[str] = 'keep',
-                frozen: Union[str, bool] = 'keep', hollow: Union[str, bool] = 'keep',
-                **fields):
+                frozen: Union[str, bool] = 'keep',
+                hollow: Union[str, bool] = 'keep',
+                **fields
+                ) -> Union[s.NoData, Data]:
         """Recreate a updated, frozen or hollow Data object.
 
         Parameters
@@ -92,6 +98,8 @@ class Data(Identifyable, LinAlgHelper, Printable):
             Indicate whether the provided transformers list is just a
             simulation, meaning that the resulting Data object is intended
             to be filled by a Storage.
+        transformations
+            TODO.
         fields
             Matrices or vector/scalar shortcuts to them.
 
@@ -99,9 +107,6 @@ class Data(Identifyable, LinAlgHelper, Printable):
         -------
         New Data object (it keeps references to the old one for performance).
         """
-
-        from pjdata.specialdata import NoData
-
         if failure == 'keep':
             failure = self.failure
         if frozen == 'keep':
@@ -113,7 +118,7 @@ class Data(Identifyable, LinAlgHelper, Printable):
         matrices.update(self._fields2matrices(fields))
 
         # klass can be Data or Collection.
-        klass = Data if self is NoData else self.__class__
+        klass = Data if self is s.NoData else self.__class__
         return klass(
             history=tuple(self.history) + tuple(transformations),
             failure=failure, frozen=frozen, hollow=hollow,

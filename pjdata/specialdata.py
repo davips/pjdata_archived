@@ -1,10 +1,12 @@
-from pjdata.aux.util import TDatas
+from __future__ import annotations
+
+from typing import Union
+
+import pjdata.data as d
 from pjdata.aux.uuid import UUID
 
-from pjdata.data import Data
 
-
-class UUIDData(Data):
+class UUIDData(d.Data):
     """Exactly like Data, but without matrices and infos.
 
      The only available information is the UUID."""
@@ -41,7 +43,7 @@ class NoData(type):
     @staticmethod
     def hollow(transformations):
         """A light Data object, i.e. without matrices."""
-        return Data.hollow(NoData, transformations)
+        return d.Data.hollow(NoData, transformations)
 
     @staticmethod
     def transformedby(func):
@@ -49,10 +51,10 @@ class NoData(type):
 
     @staticmethod
     def updated(transformations, failure='keep', **matrices):
-        return Data.updated(NoData, transformations, failure, **matrices)
+        return d.Data.updated(NoData, transformations, failure, **matrices)
 
     @staticmethod
-    def _fields2matrices(fields: TDatas):
+    def _fields2matrices(fields: Union[NoData, d.Data]):
         from pjdata.mixin.linalghelper import LinAlgHelper
         return LinAlgHelper._fields2matrices(fields)
 

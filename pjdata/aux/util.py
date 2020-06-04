@@ -1,15 +1,16 @@
-from typing import Union, Tuple, Any
+from typing import Union, Tuple
 
-from pjdata.collection import Collection
-from pjdata.data import Data
-from pjdata.specialdata import NoData, UUIDData
+import pjdata.collection as c
+import pjdata.data as d
+import pjdata.specialdata as s
 
-DataT = Union[NoData, Data]
+DataT = Union[s.NoData, d.Data]
 DataCollTupleT = Union[
-    Tuple[NoData, ...], Tuple[DataT, ...], Tuple[Collection, ...],
-    DataT, Collection
+    Tuple[s.NoData, ...], Tuple[DataT, ...], Tuple[c.Collection, ...],
+    DataT, c.Collection
 ]
-DataCollT = Union[DataT, Collection]
+DataCollT = Union[DataT, c.Collection]
+DataNoDataT = Union[s.NoData, d.Data]
 
 
 #  UUIDData
