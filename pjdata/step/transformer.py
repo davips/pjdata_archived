@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import typing
 from typing import Union, Callable, Optional
 
-import pjdata.aux.util as u
+if typing.TYPE_CHECKING:
+    import pjdata.aux.util as u
 
 
 class Transformer:
