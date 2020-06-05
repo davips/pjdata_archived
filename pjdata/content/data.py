@@ -3,12 +3,15 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Tuple, Optional
 
+import typing
+
+if typing.TYPE_CHECKING:
+    import pjdata.types as t
 import pjdata.aux.compression as com
 import pjdata.aux.uuid as u
 import pjdata.content.content as co
 import pjdata.mixin.linalghelper as li
 import pjdata.transformer as tr
-import pjdata.types as t
 from pjdata.aux.util import Property
 from pjdata.config import STORAGE_CONFIG
 
@@ -52,13 +55,15 @@ class Data(li.LinAlgHelper, co.Content):
         Yt=[['rabbit', 'mouse']]
     """
 
-    def __init__(self,
-                 history: Tuple[tr.Transformer,...],
-                 failure: Optional[str],
-                 frozen: bool,
-                 hollow: bool,
-                 storage_info: Optional[str] = None,
-                 **matrices):
+    def __init__(
+        self,
+        history: Tuple[tr.Transformer, ...],
+        failure: Optional[str],
+        frozen: bool,
+        hollow: bool,
+        storage_info: Optional[str] = None,
+        **matrices,
+    ):
         self._jsonable = matrices  # <-- TODO: put additional useful info
         # TODO: Check if types (e.g. Mt) are compatible with values (e.g. M).
         # TODO:
@@ -98,44 +103,45 @@ class Data(li.LinAlgHelper, co.Content):
         return self.updated(transformers=transformations, hollow=True)
 
     @lru_cache()
-    def field(self, name, component='undefined'):
+    def field(self, name, component="undefined"):
         """Safe access to a field, with a friendly error message."""
         name = self._remove_unsafe_prefix(name, component)
         mname = name.upper() if len(name) == 1 else name
 
         # Check existence of the field.
         if mname not in self.matrices:
-            comp = component.name if 'name' in dir(component) else component
+            comp = component.name if "name" in dir(component) else component
             raise MissingField(
-                f'\n\nLast transformation:\n{self.history[-1]} ... \n'
-                f' Data object <{self}>...\n'
-                f'...last transformed by '
-                f'{self.history[-1] and self.history[-1].name} does not '
-                f'provide field {name} needed by {comp} .\n'
-                f'Available matrices: {list(self.matrices.keys())}')
+                f"\n\nLast transformation:\n{self.history[-1]} ... \n"
+                f" Data object <{self}>...\n"
+                f"...last transformed by "
+                f"{self.history[-1] and self.history[-1].name} does not "
+                f"provide field {name} needed by {comp} .\n"
+                f"Available matrices: {list(self.matrices.keys())}"
+            )
 
         m = self.matrices[mname]
 
         # Fetch from storage if needed.
         if isinstance(m, u.UUID):
             if self.storage_info is None:
-                raise Exception('Storage not set! Unable to fetch ' + m.id)
-            print('>>>> fetching field', name, m.id)
+                raise Exception("Storage not set! Unable to fetch " + m.id)
+            print(">>>> fetching field", name, m.id)
             self.matrices[mname] = m = self._fetch_matrix(m.id)
 
         if not name.islower():
             return m
 
-        if name in ['r', 's']:
+        if name in ["r", "s"]:
             return self._mat2sca(m)
 
-        if name in ['y', 'z']:
+        if name in ["y", "z"]:
             return self._mat2vec(m)
 
     @Property
     @lru_cache()
     def Xy(self):
-        return self.field('X'), self.field('y')
+        return self.field("X"), self.field("y")
 
     @Property
     def allfrozen(self):
@@ -154,12 +160,12 @@ class Data(li.LinAlgHelper, co.Content):
     @Property
     @lru_cache()
     def ids_str(self):
-        return ','.join(self.ids_lst)
+        return ",".join(self.ids_lst)
 
     @Property
     @lru_cache()
     def history_str(self):
-        return ','.join(transf.uuid.id for transf in self.history)
+        return ",".join(transf.uuid.id for transf in self.history)
 
     @lru_cache()
     def field_dump(self, name):
@@ -170,7 +176,7 @@ class Data(li.LinAlgHelper, co.Content):
     @Property
     @lru_cache()
     def matrix_names_str(self):
-        return ','.join(self.matrix_names)
+        return ",".join(self.matrix_names)
 
     @Property
     def isfrozen(self):
@@ -183,36 +189,36 @@ class Data(li.LinAlgHelper, co.Content):
     @lru_cache()
     def _fetch_matrix(self, id):
         if self.storage_info is None:
-            raise Exception(f'There is no storage set to fetch {id})!')
-        return STORAGE_CONFIG['storages'][self.storage_info].fetch_matrix(id)
+            raise Exception(f"There is no storage set to fetch {id})!")
+        return STORAGE_CONFIG["storages"][self.storage_info].fetch_matrix(id)
 
-    def _remove_unsafe_prefix(self, item, component='undefined'):
+    def _remove_unsafe_prefix(self, item, component="undefined"):
         """Handle unsafe (i.e. frozen) fields."""
-        if item.startswith('unsafe'):
+        if item.startswith("unsafe"):
             # User knows what they are doing.
             return item[6:]
 
         if self.failure or self.isfrozen or self.ishollow:
-            raise Exception(f'Component {component} cannot access fields from Data objects that come from a '
-                            f'failed/frozen/hollow pipeline! HINT: use unsafe{item}. \n'
-                            f'HINT2: probably an ApplyUsing is missing, around a Predictor.')
+            raise Exception(
+                f"Component {component} cannot access fields from Data objects that come from a "
+                f"failed/frozen/hollow pipeline! HINT: use unsafe{item}. \n"
+                f"HINT2: probably an ApplyUsing is missing, around a Predictor."
+            )
         return item
 
     def _uuid_impl(self):
         return self._uuid
 
-
     @property
     def failure(self) -> Optional[str]:
         return self._failure
 
-
     def __getattr__(self, item):
         """Create shortcuts to fields, still passing through sanity check."""
-        if item == 'Xy':
+        if item == "Xy":
             return self.Xy
-        if 0 < (len(item) < 3 or item.startswith('unsafe')):
-            return self.field(item, '[direct access through shortcut]')
+        if 0 < (len(item) < 3 or item.startswith("unsafe")):
+            return self.field(item, "[direct access through shortcut]")
 
         # print('just curious...', item)
         return super().__getattribute__(item)

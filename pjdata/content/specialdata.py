@@ -2,9 +2,12 @@ from __future__ import annotations
 
 from typing import Dict, List, Tuple, Optional
 
+import typing
+
+if typing.TYPE_CHECKING:
+    import pjdata.types as t
 import pjdata.aux.uuid as u
 import pjdata.content.data as d
-import pjdata.types as t
 import pjdata.transformer as tr
 
 

@@ -3,9 +3,12 @@ from typing import Dict, Tuple, Optional
 import numpy as np  # type: ignore
 from numpy import ndarray
 
+import typing
+
+if typing.TYPE_CHECKING:
+    import pjdata.types as t
 
 import pjdata.aux.uuid as u
-import pjdata.types as t
 import pjdata.aux.compression as co
 import pjdata.transformer as tr
 
@@ -18,8 +21,7 @@ class LinAlgHelper:  # TODO: dismiss this mixin and create a bunch of functions 
             return mat.reshape(size)
         except Exception as e:
             print(e)
-            raise Exception(
-                f'Expecting matrix {mat} as a column or row vector...')
+            raise Exception(f"Expecting matrix {mat} as a column or row vector...")
 
     @staticmethod
     def _as_column_vector(vec: ndarray) -> ndarray:
@@ -34,7 +36,7 @@ class LinAlgHelper:  # TODO: dismiss this mixin and create a bunch of functions 
         return default if m is None else m[0][0]
 
     @classmethod
-    def _field_as_matrix(cls, field_value: 't.Field') -> 't.Field':
+    def _field_as_matrix(cls, field_value: "t.Field") -> "t.Field":
         """Given a field, return its corresponding matrix or itself if it is a list."""
 
         # Matrix given directly.
@@ -52,10 +54,10 @@ class LinAlgHelper:  # TODO: dismiss this mixin and create a bunch of functions 
         if isinstance(field_value, list):
             return field_value
 
-        raise Exception('Unknown field type ', type(field_value))
+        raise Exception("Unknown field type ", type(field_value))
 
     @classmethod
-    def fields2matrices(cls, fields: Dict[str, 't.Field']) -> Dict[str, 't.Field']:
+    def fields2matrices(cls, fields: Dict[str, "t.Field"]) -> Dict[str, "t.Field"]:
         matrices = {}
         for name, value in fields.items():
             if len(name) == 1:
@@ -64,10 +66,12 @@ class LinAlgHelper:  # TODO: dismiss this mixin and create a bunch of functions 
         return matrices
 
     @staticmethod
-    def _evolve_id(uuid: u.UUID,
-                   uuids: Dict[str, u.UUID],
-                   transformers: Tuple[tr.Transformer, ...],
-                   matrices: Dict[str, 't.Field']) -> Tuple[u.UUID, Dict[str, u.UUID]]:
+    def _evolve_id(
+        uuid: u.UUID,
+        uuids: Dict[str, u.UUID],
+        transformers: Tuple[tr.Transformer, ...],
+        matrices: Dict[str, "t.Field"],
+    ) -> Tuple[u.UUID, Dict[str, u.UUID]]:
         """Return UUID/UUIDs after transformations."""
 
         # Update matrix UUIDs.
@@ -86,7 +90,8 @@ class LinAlgHelper:  # TODO: dismiss this mixin and create a bunch of functions 
             #  and at pickleserver it gives the same error at the same time:
             #  'ZstdError: cannot compress: Src size is incorrect'
             muuid = uuids.get(
-                name, u.UUID(co.pack(value))
+                name,
+                u.UUID(co.pack(value))
                 # name, self.uuid * UUID(bytes(name, 'latin1'))  # faster
             )
 

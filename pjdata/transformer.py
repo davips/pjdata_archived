@@ -4,7 +4,10 @@ import json
 from functools import lru_cache
 from typing import Union, Callable, Optional, overload, Any
 
-import pjdata.types as t
+import typing
+if typing.TYPE_CHECKING:
+    import pjdata.types as t
+
 from pjdata.aux.serialization import serialize, deserialize
 from pjdata.aux.util import Property
 from pjdata.aux.uuid import UUID

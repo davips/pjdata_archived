@@ -3,9 +3,13 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Tuple, Optional
 
+
+import typing
+if typing.TYPE_CHECKING:
+    import pjdata.types as t
+
 import pjdata.mixin.linalghelper as li
 import pjdata.transformer as tr
-import pjdata.types as t
 from pjdata.mixin.identifiable import Identifiable
 from pjdata.mixin.printable import Printable
 
