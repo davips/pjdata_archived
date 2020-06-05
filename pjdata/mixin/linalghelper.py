@@ -3,10 +3,11 @@ from typing import Dict, Tuple, Optional
 import numpy as np  # type: ignore
 from numpy import ndarray
 
+
 import pjdata.aux.uuid as u
 import pjdata.types as t
 import pjdata.aux.compression as co
-import pjdata.transformer  as tr
+import pjdata.transformer as tr
 
 
 class LinAlgHelper:  # TODO: dismiss this mixin and create a bunch of functions  to end cyclic  imports

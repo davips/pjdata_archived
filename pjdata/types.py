@@ -4,9 +4,11 @@ from typing import Union, Tuple, List, Literal, Callable, Type, Dict
 
 from numpy import ndarray  # type: ignore
 
-import pjdata.content.collection as c
-import pjdata.content.data as d
-import pjdata.content.specialdata as s
+import typing
+if typing.TYPE_CHECKING:
+    import pjdata.content.collection as c
+    import pjdata.content.data as d
+    import pjdata.content.specialdata as s
 
 Data = Union[Type[s.NoData], d.Data]
 DataOrColl = Union[Data, c.Collection]

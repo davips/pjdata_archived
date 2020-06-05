@@ -7,10 +7,10 @@ from typing import Optional, Iterator, Callable, Union, Any, Tuple
 import pjdata.content.data as d
 import pjdata.types as t
 from pjdata.aux.util import Property
-from pjdata.content.content import Content
+import pjdata.content.content as c
 
 
-class Collection(Content):
+class Collection(c.Content):
     """ Evidently, a iterator cannot be shared between Collection objects!
     """
 
