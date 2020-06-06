@@ -43,7 +43,7 @@ class Printable:
         if isinstance(self, Transformer):
             # Taking transformer out of string for a better printing.
             jsonable = self.jsonable.copy()
-            jsonable['transformer'] = json.loads(jsonable['transformer'])
+            jsonable['component'] = json.loads(jsonable['component'])
         else:
             jsonable = self.jsonable
 

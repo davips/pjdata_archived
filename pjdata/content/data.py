@@ -100,7 +100,7 @@ class Data(li.LinAlgHelper, co.Content):
     @lru_cache()
     def field(self, name, component='undefined'):
         """Safe access to a field, with a friendly error message."""
-        name = self._remove_unsafe_prefix(name)
+        name = self._remove_unsafe_prefix(name, component)
         mname = name.upper() if len(name) == 1 else name
 
         # Check existence of the field.
@@ -186,18 +186,16 @@ class Data(li.LinAlgHelper, co.Content):
             raise Exception(f'There is no storage set to fetch {id})!')
         return STORAGE_CONFIG['storages'][self.storage_info].fetch_matrix(id)
 
-    def _remove_unsafe_prefix(self, item):
+    def _remove_unsafe_prefix(self, item, component='undefined'):
         """Handle unsafe (i.e. frozen) fields."""
         if item.startswith('unsafe'):
             # User knows what they are doing.
             return item[6:]
 
         if self.failure or self.isfrozen or self.ishollow:
-            raise Exception('Cannot access fields from Data objects that come '
-                            f'from a failed/frozen/hollow pipeline!\n'
-                            f'HINT: use unsafe{item}.'
-                            f'\nHINT2: probably an ApplyUsing is missing, '
-                            f'around a Predictor.')
+            raise Exception(f'Component {component} cannot access fields from Data objects that come from a '
+                            f'failed/frozen/hollow pipeline! HINT: use unsafe{item}. \n'
+                            f'HINT2: probably an ApplyUsing is missing, around a Predictor.')
         return item
 
     def _uuid_impl(self):
