@@ -2,15 +2,17 @@
 from abc import ABC, abstractmethod
 from functools import lru_cache
 
+from pjdata.aux.uuid import UUID
 
-class Identifyable(ABC):
-    """ Identifyable mixin. """
+
+class Identifiable(ABC):
+    """ Identifiable mixin. """
 
     # cannot use lru because we are overriding _hash_ with uuid --->>> loop
     _uuid = None
 
     @property # type: ignore
-    def uuid(self):
+    def uuid(self) -> UUID:
         """Lazily calculated unique identifier for this dataset.
 
         Should be accessed direct as a class member: 'uuid'.
@@ -20,8 +22,6 @@ class Identifyable(ABC):
             A unique identifier UUID object.
         """
         if self._uuid is None:
-            # pylint: disable=import-outside-toplevel
-            from pjdata.aux.uuid import UUID
             content = self._uuid_impl()
             isUUID = isinstance(content, UUID)
             self._uuid = content if isUUID else UUID(content.encode())

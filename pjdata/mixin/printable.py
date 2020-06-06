@@ -1,8 +1,9 @@
 """Mixin class for printing components."""
 import json
-from typing import Dict
+from abc import abstractmethod
 
 from pjdata import glconfig
+from pjdata.aux.util import Property
 
 
 def enable_global_pretty_printing():
@@ -16,12 +17,13 @@ def disable_global_pretty_printing():
 
 
 class Printable:
-    """Mixin class for deal with string printing style."""
+    """Mixin class to deal with string printing style"""
+    pretty_printing = glconfig.PRETTY_PRINTING
 
-    def __init__(self, jsonable: Dict):
-        """Mixin class for deal with string printing style."""
-        self.jsonable = jsonable
-        self.pretty_printing = glconfig.PRETTY_PRINTING
+    @Property
+    @abstractmethod
+    def jsonable(self):
+        pass
 
     def enable_pretty_printing(self):
         """Enable the pretty-printing."""
@@ -31,14 +33,14 @@ class Printable:
         """Disable the pretty-printing."""
         self.pretty_printing = False
 
-    def __str__(self, depth=''):
+    def __str__(self, depth: str = ''):
         # pylint: disable=import-outside-toplevel
-        from pjdata.step.transformation import Transformation
+        from pjdata.transformer import Transformer
         # pylint: disable=import-outside-toplevel
         from pjdata.aux.customjsonencoder import CustomJSONEncoder
 
         # TODO: is Transformation still used?
-        if isinstance(self, Transformation):
+        if isinstance(self, Transformer):
             # Taking transformer out of string for a better printing.
             jsonable = self.jsonable.copy()
             jsonable['transformer'] = json.loads(jsonable['transformer'])

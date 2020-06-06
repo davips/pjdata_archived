@@ -4,6 +4,8 @@ import warnings
 from typing import List, Dict, Union, Any
 
 # importing the module that contains the global variables.
+from numpy import ndarray
+
 GLOBAL_VARS_MODULE = importlib.import_module("pjdata.glconfig")
 
 

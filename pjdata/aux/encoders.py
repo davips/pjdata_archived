@@ -1,9 +1,10 @@
 import hashlib
+from typing import Dict, List
 
-from pjdata.aux.alphabets import alphabet800, alphabet800dic
+import pjdata.aux.alphabets as alph
 
 
-def md5_int(bytes_content):
+def md5_int(bytes_content: bytes):
     """Return MD5 hash as integer.
 
     Generates a hash intended for unique identification of content
@@ -24,7 +25,7 @@ def md5_int(bytes_content):
     return int.from_bytes(hashlib.md5(bytes_content).digest(), 'big')
 
 
-def enc(number, alphabet=alphabet800, padding=14):
+def enc(number: int, alphabet: str = alph.letters800, padding: int = 14) -> str:
     """Encode an integer to base-n. n = len(alphabet).
 
     The default is base-800 since it is enough to represent MD5 as 18 chars in
@@ -83,22 +84,18 @@ def enc(number, alphabet=alphabet800, padding=14):
     typeable and double-clickable (63)
 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz
 
-    :param alphabet: string with allowed digits
-    :param number: an integer, usually a big MD5-like one
-    :return: string representing a base-800 number (or any other base,
-    depending on the given alphabet length)
-
     Parameters
     ----------
     number
-
+        Usually a big MD5-like int
     alphabet
-
+        String with allowed digits
     padding
+        Length of output
 
     Returns
     -------
-
+        String representing a base-800 number (or any other base, depending on the given alphabet length)
     """
     l = len(alphabet)
     res = []
@@ -110,49 +107,50 @@ def enc(number, alphabet=alphabet800, padding=14):
     return ''.join(res)[::-1].rjust(padding, '0')
 
 
-def dec(digits, alphabet_dic=alphabet800dic):
-    """Decode digest from base-len(alphabet).
+def dec(digits: str, lookup: Dict[str, int] = alph.lookup800) -> int:
+    """Decode digits from base-len(alphabet).
     
     See enc() for more info.
     
     Parameters
     ----------
     digits
-    alphabet_dic
+
+    lookup
 
     Returns
     -------
-
+        Number in decimal base
     """
     res = 0
     last = len(digits) - 1
-    base = len(alphabet_dic)
+    base = len(lookup)
     for i, d in enumerate(digits):
-        res += alphabet_dic[d] * pow(base, last - i)
+        res += lookup[d] * pow(base, last - i)
     return res
 
 
 # Useful, but not really used functions. ====================================
-def encrypt(msg_bytes, key_bytes):
+def encrypt(msg: bytes, key: bytes) -> bytes:
     """AES 16 bytes encryption."""
     from Crypto.Cipher import AES
-    cipher = AES.new(key_bytes, AES.MODE_ECB)
-    return cipher.encrypt(msg_bytes)
+    cipher = AES.new(key, AES.MODE_ECB)
+    return cipher.encrypt(msg)
 
 
-def decrypt(encrypted_msg, key_bytes):
+def decrypt(encrypted_msg: bytes, key: bytes) -> bytes:
     """AES 16 bytes decryption."""
     from Crypto.Cipher import AES
-    cipher = AES.new(key_bytes, AES.MODE_ECB)
+    cipher = AES.new(key, AES.MODE_ECB)
     return cipher.decrypt(encrypted_msg)
 
 
-def intlist2bytes(lst):
+def integers2bytes(lst: List[int]) -> bytes:
     """Each int becomes 4 bytes. max=4294967294"""
     return b''.join([n.to_bytes(4, byteorder='big') for n in lst])
 
 
-def bytes2intlist(bytes_content):
+def bytes2integers(bytes_content: bytes) -> List[int]:
     """Each 4 bytes become an int."""
     n = len(bytes_content)
     return [
@@ -160,8 +158,8 @@ def bytes2intlist(bytes_content):
     ]
 
 
-# Dirty and fast encoders ....
-def pmatrix2pretty(m, alphabet):  # =alphabet1224
+# Dirty and fast encoders, ....
+def pmatrix2pretty(m: List[int], alphabet: str) -> str:  # =alphabet1224
     """Convert a permutation matrix to a string using the given alphabet.
 
     The alphabet should have at least |m|² - 1 letters.
@@ -180,7 +178,7 @@ def pmatrix2pretty(m, alphabet):  # =alphabet1224
     return ''.join(lst)
 
 
-def pretty2pmatrix(text, side, alphabet_dict):  # =alphabet1224dic
+def pretty2pmatrix(text: str, side: int, alphabet_dict: Dict[str, int]) -> List[int]:  # =alphabet1224dic
     """See pmatrix2pretty."""
     m = [x for d in text[:-1] for x in divmod(alphabet_dict[d], side)]
     if side % 2 == 1:

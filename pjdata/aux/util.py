@@ -1,21 +1,5 @@
 from __future__ import annotations
 
-from typing import Union, Tuple
-
-import pjdata.collection as c
-import pjdata.data as d
-import pjdata.specialdata as s
-
-DataT = Union[s.NoData, d.Data]
-DataCollTupleT = Union[
-    Tuple[s.NoData, ...], Tuple[DataT, ...], Tuple[c.Collection, ...],
-    DataT, c.Collection
-]
-DataCollT = Union[DataT, c.Collection]
-DataNoDataT = Union[s.NoData, d.Data]
-
-
-#  UUIDData
 
 def flatten(lst):
     return [item for sublist in lst for item in sublist]
