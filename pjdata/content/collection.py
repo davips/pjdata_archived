@@ -14,20 +14,15 @@ class Collection(Content):
     """ Evidently, a iterator cannot be shared between Collection objects!
     """
 
-    @property
-    def isfrozen(self):
-        raise NotImplementedError("should it mean 'all frozen' or 'any frozen'?")  # <-- TODO
-        # TODO: what happens when a frozen Data reach a Streamer? Would it be fooled by outdated fields?
-
-    def _uuid_impl(self):
-        return self.data.uuid
-
     def __init__(self,
                  iterator: Iterator,
                  finalizer: Callable[[Any], d.Data],
                  finite: bool = True,
+                 failure: Optional[str] = None,
+                 frozen: bool = False,
+                 hollow: bool = False,
                  debug_info: Optional[str] = None):
-        super().__init__(jsonable={'some info to print about colls': None})  # <-- TODO
+        self._jsonable = {'some info to print about colls': None}  # <-- TODO
 
         # TODO: it is possible to restart a collection, but I am not sure it has any use. Code for that:
         #  if finite:
@@ -37,6 +32,9 @@ class Collection(Content):
         self.finite: bool = finite
         self._last_args: tuple = ()
         self._finished: bool = False
+        self._failure = failure
+        self._frozen = frozen
+        self._hollow = hollow
         self.debug_info: Optional[str] = debug_info
 
     def __iter__(self):
@@ -93,6 +91,18 @@ class Collection(Content):
     def debug(self, *msg: Union[tuple, str]) -> None:
         if self.debug_info:
             print(self.debug_info, '>>>', *msg)
+
+    @Property
+    def isfrozen(self):
+        # TODO: what happens when a frozen Data reach a Streamer? Would it be fooled by outdated fields?
+        return self._frozen
+
+    @Property
+    def ishollow(self):
+        return self._hollow
+
+    def _uuid_impl(self):
+        return self.data.uuid
 
 
 @dataclass(frozen=True)

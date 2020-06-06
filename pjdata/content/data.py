@@ -3,18 +3,17 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Tuple, Optional
 
-import pjdata.content.specialdata as s
+import pjdata.aux.compression as com
+import pjdata.aux.uuid as u
+import pjdata.content.content as co
+import pjdata.mixin.linalghelper as li
+import pjdata.transformer as tr
 import pjdata.types as t
-from pjdata.aux.compression import pack
 from pjdata.aux.util import Property
-from pjdata.aux.uuid import UUID
 from pjdata.config import STORAGE_CONFIG
-from pjdata.content.content import Content
-from pjdata.mixin.linalghelper import LinAlgHelper
-from pjdata.transformer import Transformer
 
 
-class Data(LinAlgHelper, Content):
+class Data(li.LinAlgHelper, co.Content):
     """Immutable lazy data for most machine learning scenarios.
 
     Parameters
@@ -54,13 +53,13 @@ class Data(LinAlgHelper, Content):
     """
 
     def __init__(self,
-                 history: Tuple[Transformer],
+                 history: Tuple[tr.Transformer,...],
                  failure: Optional[str],
                  frozen: bool,
                  hollow: bool,
                  storage_info: Optional[str] = None,
                  **matrices):
-        super().__init__(jsonable=matrices)   # <-- TODO: put additional useful info
+        self._jsonable = matrices  # <-- TODO: put additional useful info
         # TODO: Check if types (e.g. Mt) are compatible with values (e.g. M).
         # TODO:
         #  'name' and 'desc'
@@ -68,65 +67,18 @@ class Data(LinAlgHelper, Content):
         #  dna property?
 
         self.history = history
-        self.failure = failure
+        self._failure = failure
         self._frozen = frozen
         self._hollow = hollow
         self.storage_info = storage_info
         self.matrices = matrices
 
         # Calculate UUIDs.
-        self._uuid, self.uuids = self._evolve_id(UUID(), {}, history, matrices)
+        self._uuid, self.uuids = self._evolve_id(u.UUID(), {}, history, matrices)
 
-    def updated(self: t.Data,
-                transformers: Tuple[Transformer],
-                failure: Optional[str] = 'keep',
-                frozen: t.Status = 'keep',
-                hollow: t.Status = 'keep',
-                **fields
-                ) -> Data:
-        """Recreate a updated, frozen or hollow Data object.
-
-        Parameters
-        ----------
-        transformers
-            List of Transformer objects that transforms this Data object.
-        failure
-            Updated value for failure.
-            'keep' (recommended, default) = 'keep this attribute unchanged'.
-            None (unusual) = 'no failure', possibly overriding previous
-             failures
-        frozen
-            Whether the resulting Data object should be frozen.
-        hollow
-            Indicate whether the provided transformers list is just a
-            simulation, meaning that the resulting Data object is intended
-            to be filled by a Storage.
-        transformations
-            TODO.
-        fields
-            Matrices or vector/scalar shortcuts to them.
-
-        Returns
-        -------
-        New Data object (it keeps references to the old one for performance).
-        """
-        if failure == 'keep':
-            failure = self.failure
-        if frozen == 'keep':
-            frozen = self.isfrozen
-        if hollow == 'keep':
-            hollow = self.ishollow
-
-        matrices = self.matrices.copy()
-        matrices.update(LinAlgHelper.fields2matrices(fields))
-
-        # klass can be Data or Collection.
-        klass = Data if self is s.NoData else self.__class__
-        return klass(
-            history=tuple(self.history) + tuple(transformers),
-            failure=failure, frozen=frozen, hollow=hollow,
-            storage_info=self.storage_info, **matrices
-        )
+    @Property
+    def jsonable(self):
+        return self._jsonable
 
     @Property
     @lru_cache()
@@ -165,7 +117,7 @@ class Data(LinAlgHelper, Content):
         m = self.matrices[mname]
 
         # Fetch from storage if needed.
-        if isinstance(m, UUID):
+        if isinstance(m, u.UUID):
             if self.storage_info is None:
                 raise Exception('Storage not set! Unable to fetch ' + m.id)
             print('>>>> fetching field', name, m.id)
@@ -213,7 +165,7 @@ class Data(LinAlgHelper, Content):
     def field_dump(self, name):
         """Lazily compressed matrix for a given field.
         Useful for optimized persistence backends for Cache."""
-        return pack(self.field(name))
+        return com.pack(self.field(name))
 
     @Property
     @lru_cache()
@@ -227,14 +179,6 @@ class Data(LinAlgHelper, Content):
     @Property
     def ishollow(self):
         return self._hollow
-
-    def transformedby(self, func):
-        """Return this Data object transformed by func.
-
-        Return itself if it is frozen or failed."""
-        if self.isfrozen or self.failure:
-            return self
-        return func(self)
 
     @lru_cache()
     def _fetch_matrix(self, id):
@@ -258,6 +202,12 @@ class Data(LinAlgHelper, Content):
 
     def _uuid_impl(self):
         return self._uuid
+
+
+    @property
+    def failure(self) -> Optional[str]:
+        return self._failure
+
 
     def __getattr__(self, item):
         """Create shortcuts to fields, still passing through sanity check."""
