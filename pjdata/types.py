@@ -21,4 +21,4 @@ Field = Union[List[str], ndarray]  # For Data fields.
 Status = Union[str, bool, Literal["keep"]]  # For frozen and hollow updates.
 # Type of function transform(). Can return NoData because of Sink.
 Transformation = Callable[[Data], Data]
-Acc = Union[List[ndarray], float]
+Acc = Union[List[ndarray], float]  # Possible result types for partial calculations at streamers.
