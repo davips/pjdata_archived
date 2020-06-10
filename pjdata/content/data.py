@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Tuple, Optional
+from typing import Tuple, Optional, TYPE_CHECKING, Iterator, Union
 
-import typing
-
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     import pjdata.types as t
 import pjdata.aux.compression as com
 import pjdata.aux.uuid as u
@@ -14,7 +12,6 @@ import pjdata.mixin.linalghelper as li
 import pjdata.transformer as tr
 from pjdata.aux.util import Property
 from pjdata.config import STORAGE_CONFIG
-from pjdata.content.specialdata import TemporaryData
 
 
 class Data(li.LinAlgHelper, co.Content):
@@ -62,7 +59,8 @@ class Data(li.LinAlgHelper, co.Content):
             failure: Optional[str],
             frozen: bool,
             hollow: bool,
-            storage_info: Optional[str] = None,
+            stream: Optional[Iterator[Data]],
+            storage_info: Optional[str],
             **matrices,
     ):
         self._jsonable = matrices  # <-- TODO: put additional useful info
@@ -76,6 +74,7 @@ class Data(li.LinAlgHelper, co.Content):
         self._failure = failure
         self._frozen = frozen
         self._hollow = hollow
+        self.stream = stream
         self.storage_info = storage_info
         self.matrices = matrices
 
@@ -84,7 +83,8 @@ class Data(li.LinAlgHelper, co.Content):
 
     def updated(self,
                 transformers: Tuple[tr.Transformer, ...],
-                failure: Optional[str] = 'keep',
+                failure: Union[str, t.Status] = 'keep',
+                stream: Union[Iterator[Data], t.Status] = 'keep',
                 **fields
                 ) -> t.DataOrColl:
         """Recreate an updated Data object.
@@ -100,6 +100,8 @@ class Data(li.LinAlgHelper, co.Content):
              failures
         fields
             Matrices or vector/scalar shortcuts to them.
+        stream
+            Iterator that generates Data objects.
 
         Returns
         -------
@@ -107,12 +109,14 @@ class Data(li.LinAlgHelper, co.Content):
         """
         if failure == 'keep':
             failure = self.failure
+        if stream == 'keep':
+            stream = self.stream
         matrices = self.matrices.copy()
         matrices.update(li.LinAlgHelper.fields2matrices(fields))
 
         return Data(
             history=self.history + transformers,
-            failure=failure, frozen=self.isfrozen, hollow=self.ishollow,
+            failure=failure, frozen=self.isfrozen, hollow=self.ishollow, stream=stream,
             storage_info=self.storage_info, **matrices
         )
 
