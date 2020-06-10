@@ -14,6 +14,7 @@ import pjdata.mixin.linalghelper as li
 import pjdata.transformer as tr
 from pjdata.aux.util import Property
 from pjdata.config import STORAGE_CONFIG
+from pjdata.content.specialdata import TemporaryData
 
 
 class Data(li.LinAlgHelper, co.Content):
@@ -56,13 +57,13 @@ class Data(li.LinAlgHelper, co.Content):
     """
 
     def __init__(
-        self,
-        history: Tuple[tr.Transformer, ...],
-        failure: Optional[str],
-        frozen: bool,
-        hollow: bool,
-        storage_info: Optional[str] = None,
-        **matrices,
+            self,
+            history: Tuple[tr.Transformer, ...],
+            failure: Optional[str],
+            frozen: bool,
+            hollow: bool,
+            storage_info: Optional[str] = None,
+            **matrices,
     ):
         self._jsonable = matrices  # <-- TODO: put additional useful info
         # TODO: Check if types (e.g. Mt) are compatible with values (e.g. M).
@@ -81,6 +82,40 @@ class Data(li.LinAlgHelper, co.Content):
         # Calculate UUIDs.
         self._uuid, self.uuids = self._evolve_id(u.UUID(), {}, history, matrices)
 
+    def updated(self,
+                transformers: Tuple[tr.Transformer, ...],
+                failure: Optional[str] = 'keep',
+                **fields
+                ) -> t.DataOrColl:
+        """Recreate an updated Data object.
+
+        Parameters
+        ----------
+        transformers
+            List of Transformer objects that transforms this Data object.
+        failure
+            Updated value for failure.
+            'keep' (recommended, default) = 'keep this attribute unchanged'.
+            None (unusual) = 'no failure', possibly overriding previous
+             failures
+        fields
+            Matrices or vector/scalar shortcuts to them.
+
+        Returns
+        -------
+        New Content object (it keeps references to the old one for performance).
+        """
+        if failure == 'keep':
+            failure = self.failure
+        matrices = self.matrices.copy()
+        matrices.update(li.LinAlgHelper.fields2matrices(fields))
+
+        return Data(
+            history=self.history + transformers,
+            failure=failure, frozen=self.isfrozen, hollow=self.ishollow,
+            storage_info=self.storage_info, **matrices
+        )
+
     @Property
     def jsonable(self):
         return self._jsonable
@@ -88,23 +123,47 @@ class Data(li.LinAlgHelper, co.Content):
     @Property
     @lru_cache()
     def frozen(self):
-        """frozen faz dois papéis:
-            1- pipeline precoce (p. ex. após SVM.enhance)
+        """TODO: Explicar aqui papéis de frozen...
+            1- pipeline fim-precoce (p. ex. após SVM.enhance)
             2- pipeline falho (após exceção)
-        um terceiro papel não pode ser feito por ele, pois frozen é uma
-        propriedade armazenável de Data:
-            3- hollow = mockup p/ ser preenchido pelo cururu
          """
-        return self.updated(transformers=tuple(), frozen=True)
+        return Data(history=self.history,
+                    failure=self.failure,
+                    frozen=True,
+                    hollow=self.ishollow,
+                    storage_info=self.storage_info,
+                    **self.matrices)
+
+    @Property
+    @lru_cache()
+    def hollow(self: t.Data, transformers):
+        """Create a temporary hollow (only Persistence can fill it) Data object."""
+        return Data(history=self.history + transformers,
+                    failure=self.failure,
+                    frozen=self.isfrozen,
+                    hollow=True,
+                    storage_info=self.storage_info,
+                    **self.matrices)
 
     @lru_cache()
-    def hollow(self: t.Data, transformations):
-        """temporary hollow (only Persistence can fill it)         """
-        return self.updated(transformers=transformations, hollow=True)
+    def field(self, name, block=False, component="undefined"):
+        """
+        Safe access to a field, with a friendly error message.
 
-    @lru_cache()
-    def field(self, name, component="undefined"):
-        """Safe access to a field, with a friendly error message."""
+        Parameters
+        ----------
+        name
+            Name of the field.
+        block
+            Whether to wait for the value or to raise FieldNotReady exception if it is not readily available.
+        component
+            Scope hint about origin of the problem.
+
+        Returns
+        -------
+        Matrix, vector or scalar
+        """
+        # TODO: better organize this code
         name = self._remove_unsafe_prefix(name, component)
         mname = name.upper() if len(name) == 1 else name
 
@@ -122,21 +181,30 @@ class Data(li.LinAlgHelper, co.Content):
 
         m = self.matrices[mname]
 
-        # Fetch from storage if needed.
+        # Fetch from storage?...
         if isinstance(m, u.UUID):
             if self.storage_info is None:
-                raise Exception("Storage not set! Unable to fetch " + m.id)
+                comp = component.name if "name" in dir(component) else component
+                raise Exception("Storage not set! Unable to fetch " + m.id, "requested by", comp)
             print(">>>> fetching field", name, m.id)
             self.matrices[mname] = m = self._fetch_matrix(m.id)
 
+        # Fetch previously deferred value?...
+        if callable(m):
+            if block:
+                raise NotImplementedError('Waiting of values not implemented yet!')
+            self.matrices[mname] = m = m()
+
+        # Just return formatted according to capitalization...
         if not name.islower():
             return m
-
-        if name in ["r", "s"]:
+        elif name in ["r", "s"]:
             return self._mat2sca(m)
-
-        if name in ["y", "z"]:
+        elif name in ["y", "z"]:
             return self._mat2vec(m)
+        else:
+            comp = component.name if "name" in dir(component) else component
+            raise Exception("Unexpected lower letter:", m, "requested by", comp)
 
     @Property
     @lru_cache()
@@ -209,7 +277,7 @@ class Data(li.LinAlgHelper, co.Content):
     def _uuid_impl(self):
         return self._uuid
 
-    @property
+    @Property
     def failure(self) -> Optional[str]:
         return self._failure
 
