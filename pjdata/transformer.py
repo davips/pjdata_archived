@@ -76,6 +76,7 @@ class Transformer(Identifiable, Printable):  # TODO: it should have some feature
         if isinstance(content, tuple):
             return tuple((dt.transformedby(self) for dt in content))
         # Todo: We should add exception handling here because self.func can raise errors
+        # print(' transform... by', self.name)
         return content.transformedby(self)
 
     def _uuid_impl(self):
