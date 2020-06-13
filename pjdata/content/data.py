@@ -1,20 +1,21 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Tuple, Optional, TYPE_CHECKING, Iterator, Union
+from typing import Tuple, Optional, TYPE_CHECKING, Iterator, Union, Literal
+
+from pjdata.mixin.identifiable import Identifiable
 
 if TYPE_CHECKING:
     import pjdata.types as t
 import pjdata.aux.compression as com
 import pjdata.aux.uuid as u
-import pjdata.content.content as co
 import pjdata.mixin.linalghelper as li
 import pjdata.transformer as tr
 from pjdata.aux.util import Property
 from pjdata.config import STORAGE_CONFIG
 
 
-class Data(li.LinAlgHelper, co.Content):
+class Data(Identifiable, li.LinAlgHelper):
     """Immutable lazy data for most machine learning scenarios.
 
     Parameters
@@ -84,9 +85,9 @@ class Data(li.LinAlgHelper, co.Content):
     def updated(self,
                 transformers: Tuple[tr.Transformer, ...],
                 failure: Union[str, t.Status] = 'keep',
-                stream: Union[Iterator[Data], t.Status] = 'keep',
+                stream: Union[Iterator[Data], None, Literal["keep"]] = 'keep',
                 **fields
-                ) -> t.DataOrColl:
+                ) -> t.Data:
         """Recreate an updated Data object.
 
         Parameters
@@ -135,6 +136,7 @@ class Data(li.LinAlgHelper, co.Content):
                     failure=self.failure,
                     frozen=True,
                     hollow=self.ishollow,
+                    stream=None,
                     storage_info=self.storage_info,
                     **self.matrices)
 
@@ -146,6 +148,7 @@ class Data(li.LinAlgHelper, co.Content):
                     failure=self.failure,
                     frozen=self.isfrozen,
                     hollow=True,
+                    stream=None,
                     storage_info=self.storage_info,
                     **self.matrices)
 
@@ -209,6 +212,17 @@ class Data(li.LinAlgHelper, co.Content):
         else:
             comp = component.name if "name" in dir(component) else component
             raise Exception("Unexpected lower letter:", m, "requested by", comp)
+
+    def transformedby(self, transformer: tr.Transformer) -> t.Data:
+        """Return this Data object transformed by func.
+
+        Return itself if it is frozen or failed."""
+        if self.isfrozen or self.failure:
+            return self
+        result = transformer.func(self)
+        if isinstance(result, dict):
+            return self.updated(transformers=(transformer,), **transformer.func(self))
+        return result
 
     @Property
     @lru_cache()
@@ -292,7 +306,7 @@ class Data(li.LinAlgHelper, co.Content):
         if 0 < (len(item) < 3 or item.startswith("unsafe")):
             return self.field(item, "[direct access through shortcut]")
 
-        # print('just curious...', item)
+        # print('getting attribute...', item)
         return super().__getattribute__(item)
 
     # It does not work because of __hash__
