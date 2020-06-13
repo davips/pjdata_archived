@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import json
+import typing
 from functools import lru_cache
 from typing import Union, Callable, Optional, overload, Any
 
-import typing
 if typing.TYPE_CHECKING:
     import pjdata.types as t
 
@@ -70,21 +70,12 @@ class Transformer(Identifiable, Printable):  # TODO: it should have some feature
             serialized = jsonable['component']
 
         component = FakeComponent()
-        return Transformer(component, ) #TODO: how to materialize func?
+        return Transformer(component, )  # TODO: how to materialize func?
 
-    @overload
     def transform(self, content: t.DataOrTup) -> t.DataOrTup:
-        ...
-
-    @overload
-    def transform(self, content: t.CollOrTup) -> t.CollOrTup:
-        ...
-
-    def transform(self, content: t.DataOrCollOrTup) -> t.DataOrCollOrTup:  # TODO: overload
         if isinstance(content, tuple):
             return tuple((dt.transformedby(self) for dt in content))
-        # Todo: We should add exception handling here because self.func can
-        #  raise an error
+        # Todo: We should add exception handling here because self.func can raise errors
         return content.transformedby(self)
 
     def _uuid_impl(self):

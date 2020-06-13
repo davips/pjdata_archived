@@ -1,24 +1,30 @@
 from __future__ import annotations
 
-from typing import Union, Tuple, List, Literal, Callable, Type, Dict
+from itertools import repeat
+from typing import Union, Tuple, List, Literal, Callable, Type, Dict, Generator, Iterator
 
 from numpy import ndarray  # type: ignore
 
-import pjdata.content.collection as c
 import pjdata.content.data as d
 import pjdata.content.specialdata as s
 
 Data = Union[Type[s.NoData], d.Data]
-DataOrColl = Union[Data, c.Collection]
 # HINT: Multi containing a Sink can produce heterogeneous tuples
 DataTup = Tuple[Data, ...]
-CollTup = Tuple[c.Collection, ...]
 DataOrTup = Union[Data, DataTup]
-CollOrTup = Union[c.Collection, CollTup]
-DataOrCollOrTup = Union[DataOrTup, CollOrTup]
 
 Field = Union[List[str], ndarray]  # For Data fields.
-Status = Union[str, bool, Literal["keep"]]  # For frozen and hollow updates.
+Status = Union[bool, Literal["keep"]]  # For frozen and hollow updates.
+Acc = Union[List[Data], List[ndarray], float]  # Possible result types for cumulative streams.
+
+Result = Union[
+    # Possible result types for _enhancer_func and _model_func.
+    Data,
+    Dict[
+        str,
+        Union[None, Field, Iterator[Data], Generator[Data, None, Acc], Callable[[], Field]]
+    ]
+]
+
 # Type of function transform(). Can return NoData because of Sink.
-Transformation = Callable[[Data], Data]
-Acc = Union[List[ndarray], float]  # Possible result types for partial calculations at streamers.
+Transformation = Callable[[Data], Result]
