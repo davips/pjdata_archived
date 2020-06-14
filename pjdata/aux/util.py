@@ -6,7 +6,11 @@ def flatten(lst):
 
 
 class Property(object):
-    """Substitute for the @property decorator due mypy conflicts"""
+    """Substitute for the @property decorator due mypy conflicts.
+
+    More information can be found on mypy's
+    Github, issue #1362
+    """
 
     def __init__(self, fget=None, fset=None, fdel=None, doc=None):
         self.fget = fget

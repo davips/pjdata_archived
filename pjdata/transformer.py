@@ -15,7 +15,7 @@ from pjdata.mixin.identifiable import Identifiable
 from pjdata.mixin.printable import Printable
 
 
-class Transformer(Identifiable, Printable):  # TODO: it should have some features from old Transformation class
+class Transformer(Identifiable, Printable):
 
     def __init__(
             self,
