@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from functools import lru_cache
+from functools import lru_cache, cached_property
 from typing import Tuple, Optional, TYPE_CHECKING, Iterator, Union, Literal
 
 from pjdata.mixin.identifiable import Identifiable
@@ -125,8 +125,7 @@ class Data(Identifiable, li.LinAlgHelper):
     def jsonable(self):
         return self._jsonable
 
-    @Property
-    @lru_cache()
+    @cached_property
     def frozen(self):
         """TODO: Explicar aqui papéis de frozen...
             1- pipeline fim-precoce (p. ex. após SVM.enhance)
