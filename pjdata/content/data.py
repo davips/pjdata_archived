@@ -152,7 +152,7 @@ class Data(WithIdentification, li.LinAlgHelper):
                     **self.matrices)
 
     @lru_cache()
-    def field(self, name, block=False, context: Any = "undefined"):
+    def field(self, name, block=False, context: WithIdentification = "undefined"):
         """
         Safe access to a field, with a friendly error message.
 
