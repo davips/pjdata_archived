@@ -83,7 +83,7 @@ class Data(Identifiable, li.LinAlgHelper):
         self._uuid, self.uuids = self._evolve_id(u.UUID(), {}, history, matrices)
 
     def updated(self,
-                transformers: Tuple[tr.Transformer, ...],
+                components: Tuple[tr.Transformer, ...],
                 failure: Union[str, t.Status] = 'keep',
                 stream: Union[Iterator[Data], None, Literal["keep"]] = 'keep',
                 **fields
@@ -92,7 +92,7 @@ class Data(Identifiable, li.LinAlgHelper):
 
         Parameters
         ----------
-        transformers
+        components
             List of Transformer objects that transforms this Data object.
         failure
             Updated value for failure.
@@ -116,7 +116,7 @@ class Data(Identifiable, li.LinAlgHelper):
         matrices.update(li.LinAlgHelper.fields2matrices(fields))
 
         return Data(
-            history=self.history + transformers,
+            history=self.history + components,
             failure=failure, frozen=self.isfrozen, hollow=self.ishollow, stream=stream,
             storage_info=self.storage_info, **matrices
         )
@@ -141,9 +141,9 @@ class Data(Identifiable, li.LinAlgHelper):
 
     @Property
     @lru_cache()
-    def hollow(self: t.Data, transformers):
+    def hollow(self: t.Data, components):
         """Create a temporary hollow (only Persistence can fill it) Data object."""
-        return Data(history=self.history + transformers,
+        return Data(history=self.history + components,
                     failure=self.failure,
                     frozen=self.isfrozen,
                     hollow=True,
@@ -152,7 +152,7 @@ class Data(Identifiable, li.LinAlgHelper):
                     **self.matrices)
 
     @lru_cache()
-    def field(self, name, block=False, component="undefined"):
+    def field(self, name, block=False, context: Any = "undefined"):
         """
         Safe access to a field, with a friendly error message.
 
@@ -162,7 +162,7 @@ class Data(Identifiable, li.LinAlgHelper):
             Name of the field.
         block
             Whether to wait for the value or to raise FieldNotReady exception if it is not readily available.
-        component
+        context
             Scope hint about origin of the problem.
 
         Returns
@@ -170,12 +170,12 @@ class Data(Identifiable, li.LinAlgHelper):
         Matrix, vector or scalar
         """
         # TODO: better organize this code
-        name = self._remove_unsafe_prefix(name, component)
+        name = self._remove_unsafe_prefix(name, context)
         mname = name.upper() if len(name) == 1 else name
 
         # Check existence of the field.
         if mname not in self.matrices:
-            comp = component.name if "name" in dir(component) else component
+            comp = context.name if "name" in dir(context) else context
             raise MissingField(
                 f"\n\nLast transformation:\n{self.history[-1]} ... \n"
                 f" Data object <{self}>...\n"
@@ -190,7 +190,7 @@ class Data(Identifiable, li.LinAlgHelper):
         # Fetch from storage?...
         if isinstance(m, u.UUID):
             if self.storage_info is None:
-                comp = component.name if "name" in dir(component) else component
+                comp = context.name if "name" in dir(context) else context
                 raise Exception("Storage not set! Unable to fetch " + m.id, "requested by", comp)
             print(">>>> fetching field", name, m.id)
             self.matrices[mname] = m = self._fetch_matrix(m.id)
@@ -209,7 +209,7 @@ class Data(Identifiable, li.LinAlgHelper):
         elif name in ["y", "z"]:
             return self._mat2vec(m)
         else:
-            comp = component.name if "name" in dir(component) else component
+            comp = context.name if "name" in dir(context) else context
             raise Exception("Unexpected lower letter:", m, "requested by", comp)
 
     def transformedby(self, transformer: tr.Transformer) -> t.Data:
@@ -220,7 +220,7 @@ class Data(Identifiable, li.LinAlgHelper):
             return self
         result = transformer.func(self)
         if isinstance(result, dict):
-            return self.updated(transformers=(transformer,), **transformer.func(self))
+            return self.updated(components=(transformer,), **transformer.func(self))
         return result
 
     @Property
