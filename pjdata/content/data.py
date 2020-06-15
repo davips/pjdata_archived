@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import lru_cache, cached_property
 from typing import Tuple, Optional, TYPE_CHECKING, Iterator, Union, Literal
 
-from pjdata.mixin.identifiable import Identifiable
+from pjdata.mixin.withidentification import WithIdentification
 
 if TYPE_CHECKING:
     import pjdata.types as t
@@ -15,7 +15,7 @@ from pjdata.aux.util import Property
 from pjdata.config import STORAGE_CONFIG
 
 
-class Data(Identifiable, li.LinAlgHelper):
+class Data(WithIdentification, li.LinAlgHelper):
     """Immutable lazy data for most machine learning scenarios.
 
     Parameters
@@ -320,6 +320,10 @@ class Data(Identifiable, li.LinAlgHelper):
 
     def __hash__(self):
         return hash(self.uuid)
+
+    def _name_impl(self):
+        # return self._name
+        raise NotImplementedError("We need to decide if Data has a name")  # <-- TODO
 
 
 class MissingField(Exception):

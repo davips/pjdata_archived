@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import typing
 from functools import lru_cache
-from typing import Union, Callable, Optional, overload, Any
+from typing import Union, Callable, Optional, Any
 
 if typing.TYPE_CHECKING:
     import pjdata.types as t
@@ -11,11 +11,11 @@ if typing.TYPE_CHECKING:
 from pjdata.aux.serialization import serialize, deserialize
 from pjdata.aux.util import Property
 from pjdata.aux.uuid import UUID
-from pjdata.mixin.identifiable import Identifiable
+from pjdata.mixin.withidentification import WithIdentification
 from pjdata.mixin.printable import Printable
 
 
-class Transformer(Identifiable, Printable):
+class Transformer(WithIdentification, Printable):
 
     def __init__(
             self,
@@ -28,7 +28,7 @@ class Transformer(Identifiable, Printable):
             ]]
     ):
         self._uuid = component.cfg_uuid
-        self.name, self.path = component.name, component.path
+        self._name, self.path = component.name, component.path
         self.component_uuid = component.uuid
         self._serialized_component = component.serialized
         self._jsonable = {
@@ -83,5 +83,8 @@ class Transformer(Identifiable, Printable):
         return self._uuid
 
     @Property
-    def jsonable(self):
+    def _jsonable_impl(self):
         return self._jsonable
+
+    def _name_impl(self):
+        return self._name

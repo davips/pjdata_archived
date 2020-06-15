@@ -1,6 +1,7 @@
 """Mixin class for printing components."""
 import json
 from abc import abstractmethod
+from functools import cached_property
 
 from pjdata import glconfig
 from pjdata.aux.util import Property
@@ -20,9 +21,12 @@ class Printable:
     """Mixin class to deal with string printing style"""
     pretty_printing = glconfig.PRETTY_PRINTING
 
-    @Property
-    @abstractmethod
+    @cached_property
     def jsonable(self):
+        return self._jsonable_impl()
+
+    @abstractmethod
+    def _jsonable_impl(self):
         pass
 
     def enable_pretty_printing(self):
@@ -42,10 +46,10 @@ class Printable:
         # TODO: is Transformation still used?
         if isinstance(self, Transformer):
             # Taking transformer out of string for a better printing.
-            jsonable = self.jsonable.copy()
+            jsonable = self._jsonable_impl.copy()
             jsonable['component'] = json.loads(jsonable['component'])
         else:
-            jsonable = self.jsonable
+            jsonable = self._jsonable_impl
 
         if not self.pretty_printing:
             js_str = json.dumps(jsonable, cls=CustomJSONEncoder,
