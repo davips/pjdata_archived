@@ -146,20 +146,22 @@ class Data(WithIdentification, li.LinAlgHelper):
                     failure=self.failure,
                     frozen=True,
                     hollow=self.ishollow,
-                    stream=None,
+                    stream=self.stream,
                     storage_info=self.storage_info,
                     **self.matrices)
 
     @Property
     @lru_cache()
-    def hollow(self: t.Data, components):
-        """Create a temporary hollow (only Persistence can fill it) Data object."""
-        return Data(history=self.history + components,
+    def hollow(self: t.Data, transformer: tr.Transformer):
+        """Create a temporary hollow Data object (only Persistence can fill it)."""
+        return Data(history=self.history,
                     failure=self.failure,
                     frozen=self.isfrozen,
                     hollow=True,
-                    stream=None,
+                    stream=self.stream,
                     storage_info=self.storage_info,
+                    uuid=transformer.uuid,
+                    uuids=transformer.uuids,
                     **self.matrices)
 
     @lru_cache()
