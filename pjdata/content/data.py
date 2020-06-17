@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 import pjdata.aux.compression as com
 import pjdata.aux.uuid as u
 import pjdata.mixin.linalghelper as li
-import pjdata.transformer as tr
+import pjdata.transformer.transformer as tr
 from pjdata.aux.util import Property
 from pjdata.config import STORAGE_CONFIG
 
@@ -216,11 +216,13 @@ class Data(WithIdentification, li.LinAlgHelper):
         """Return this Data object transformed by func.
 
         Return itself if it is frozen or failed."""
+        # ps. It is preferable to have this method in Data instead of Transformer because of the different handlings
+        # depending on the type of content: Data, NoData.
         if self.isfrozen or self.failure:
             return self
-        result = transformer.func(self)
+        result = transformer.rawtransform(self)
         if isinstance(result, dict):
-            return self.updated(components=(transformer,), **transformer.func(self))
+            return self.updated(components=(transformer,), **transformer.rawtransform(self))
         return result
 
     @Property

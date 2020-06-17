@@ -39,11 +39,10 @@ class Printable:
 
     def __str__(self, depth: str = ''):
         # pylint: disable=import-outside-toplevel
-        from pjdata.transformer import Transformer
+        from pjdata.transformer.transformer import Transformer
         # pylint: disable=import-outside-toplevel
         from pjdata.aux.customjsonencoder import CustomJSONEncoder
 
-        # TODO: is Transformation still used?
         if isinstance(self, Transformer):
             # Taking transformer out of string for a better printing.
             jsonable = self._jsonable_impl.copy()

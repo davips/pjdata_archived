@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import json
 import typing
+from abc import ABC, abstractmethod
 from functools import lru_cache
-from typing import Union, Callable, Optional, Any
+
+from pjdata.mixin.withserialization import WithSerialization
 
 if typing.TYPE_CHECKING:
     import pjdata.types as t
@@ -15,19 +17,13 @@ from pjdata.mixin.withidentification import WithIdentification
 from pjdata.mixin.printable import Printable
 
 
-class Transformer(WithIdentification, Printable):
+class Transformer(WithIdentification, Printable, ABC):
+    def __init__(self, component: WithSerialization):
+        """Base class for all transformers.
 
-    def __init__(
-            self,
-            component: Any,  # TODO: <-- use duck typing to import things from pjml into pjdata?
-            func: Optional[t.Transformation],  # problema
-            info: Optional[Union[
-                dict,
-                Callable[[], dict],
-                Callable[[t.Data], dict]  # TODO: improve this?
-            ]]
-    ):
-        self._uuid = component.cfg_uuid
+        ps. Assumes all components are symmetric. This class uses the same component details for both enhance and model.
+        """
+        # I.e. the transformation is always the same, no matter at which step (modeling/enhancing) we are.
         self._name, self.path = component.name, component.path
         self.component_uuid = component.uuid
         self._serialized_component = component.serialized
@@ -38,16 +34,6 @@ class Transformer(WithIdentification, Printable):
             'component_uuid': component.uuid,
             'component': self._serialized_component
         }
-
-        self.func = func if func else lambda data: data
-        if callable(info):
-            self.info = info
-        elif isinstance(info, dict):
-            self.info = lambda: info
-        elif info is None:
-            self.info = lambda: {}
-        else:
-            raise TypeError('Unexpected info type. You should use, callable, dict or None. Not', type(info))
 
     @Property
     @lru_cache()
@@ -79,8 +65,9 @@ class Transformer(WithIdentification, Printable):
         # print(' transform... by', self.name)
         return content.transformedby(self)
 
-    def _uuid_impl(self):
-        return self._uuid
+    @abstractmethod
+    def rawtransform(self, data: t.Data):
+        pass
 
     @Property
     def _jsonable_impl(self):
@@ -88,3 +75,4 @@ class Transformer(WithIdentification, Printable):
 
     def _name_impl(self):
         return self._name
+
