@@ -24,3 +24,4 @@ class Property(object):
         if self.fget is None:
             raise AttributeError("unreadable attribute")
         return self.fget(obj)
+

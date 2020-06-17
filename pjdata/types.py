@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from itertools import repeat
-from typing import Union, Tuple, List, Literal, Callable, Type, Dict, Generator, Iterator
+from typing import Union, Tuple, List, Callable, Type, Dict, Generator, Iterator, Optional
 
 from numpy import ndarray  # type: ignore
 
@@ -14,7 +14,6 @@ DataTup = Tuple[Data, ...]
 DataOrTup = Union[Data, DataTup]
 
 Field = Union[List[str], ndarray]  # For Data fields.
-Status = Union[bool, Literal["keep"]]  # For frozen and hollow updates.
 Acc = Union[List[Data], List[ndarray], float]  # Possible result types for cumulative streams.
 
 Result = Union[

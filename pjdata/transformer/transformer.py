@@ -58,7 +58,7 @@ class Transformer(WithIdentification, Printable, ABC):
         component = FakeComponent()
         return Transformer(component, )  # TODO: how to materialize func?
 
-    def transform(self, content: t.DataOrTup) -> t.DataOrTup:
+    def transform(self, content: t.DataOrTup, exit_on_error=True) -> t.DataOrTup:
         if isinstance(content, tuple):
             return tuple((dt.transformedby(self) for dt in content))
         # Todo: We should add exception handling here because self.func can raise errors
@@ -66,7 +66,7 @@ class Transformer(WithIdentification, Printable, ABC):
         return content.transformedby(self)
 
     @abstractmethod
-    def rawtransform(self, data: t.Data):
+    def rawtransform(self, content: t.Data) -> t.Result:
         pass
 
     @Property

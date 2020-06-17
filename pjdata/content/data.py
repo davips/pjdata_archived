@@ -62,8 +62,8 @@ class Data(WithIdentification, li.LinAlgHelper):
             hollow: bool,
             stream: Optional[Iterator[Data]],
             storage_info: Optional[str],
-            uuid: Optional[u.UUID] = None,
-            uuids: Optional[Dict[str, u.UUID]] = None,
+            uuid: u.UUID = None,
+            uuids: Dict[str, u.UUID] = None,
             **matrices,
     ):
         self._jsonable = matrices  # <-- TODO: put additional useful info
@@ -87,7 +87,7 @@ class Data(WithIdentification, li.LinAlgHelper):
                 raise Exception("Argument 'uuid' should be accompanied by a corresponding 'uuids'!")
             self._uuid, self.uuids = uuid, uuids
         else:
-            self._uuid, self.uuids = self._evolve_id(u.UUID(), {}, history, matrices)
+            self._uuid, self.uuids = li.evolve_id(u.UUID(), {}, history, matrices)
 
     def updated(self,
                 transformers: Tuple[tr.Transformer, ...],
@@ -122,7 +122,7 @@ class Data(WithIdentification, li.LinAlgHelper):
         matrices = self.matrices.copy()
         matrices.update(li.LinAlgHelper.fields2matrices(fields))
 
-        uuid, uuids = self._evolve_id(self.uuid, self.uuids, transformers, matrices)
+        uuid, uuids = li.evolve_id(self.uuid, self.uuids, transformers, matrices)
 
         return Data(
             # TODO: optimize history, nesting/tree may be a better choice, to build upon the ref to the previous history
@@ -150,18 +150,18 @@ class Data(WithIdentification, li.LinAlgHelper):
                     storage_info=self.storage_info,
                     **self.matrices)
 
-    @Property
     @lru_cache()
     def hollow(self: t.Data, transformer: tr.Transformer):
         """Create a temporary hollow Data object (only Persistence can fill it)."""
+        uuid, uuids = li.evolve_id(self.uuid, self.uuids, (transformer,), self.matrices)
         return Data(history=self.history,
                     failure=self.failure,
                     frozen=self.isfrozen,
                     hollow=True,
                     stream=self.stream,
                     storage_info=self.storage_info,
-                    uuid=transformer.uuid,
-                    uuids=transformer.uuids,
+                    uuid=uuid,
+                    uuids=uuids,
                     **self.matrices)
 
     @lru_cache()
