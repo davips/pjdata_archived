@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache, cached_property
-from typing import Tuple, Optional, TYPE_CHECKING, Iterator, Union, Literal
+from typing import Tuple, Optional, TYPE_CHECKING, Iterator, Union, Literal, Dict
 
 from pjdata.mixin.withidentification import WithIdentification
 
@@ -62,6 +62,8 @@ class Data(WithIdentification, li.LinAlgHelper):
             hollow: bool,
             stream: Optional[Iterator[Data]],
             storage_info: Optional[str],
+            uuid: Optional[u.UUID] = None,
+            uuids: Optional[Dict[str, u.UUID]] = None,
             **matrices,
     ):
         self._jsonable = matrices  # <-- TODO: put additional useful info
@@ -79,12 +81,17 @@ class Data(WithIdentification, li.LinAlgHelper):
         self.storage_info = storage_info
         self.matrices = matrices
 
-        # Calculate UUIDs.
-        self._uuid, self.uuids = self._evolve_id(u.UUID(), {}, history, matrices)
+        # Calculate UUIDs if not provided (this usually means this Data object is a newborn).
+        if uuid:
+            if uuids is None:
+                raise Exception("Argument 'uuid' should be accompanied by a corresponding 'uuids'!")
+            self._uuid, self.uuids = uuid, uuids
+        else:
+            self._uuid, self.uuids = self._evolve_id(u.UUID(), {}, history, matrices)
 
     def updated(self,
-                components: Tuple[tr.Transformer, ...],
-                failure: Union[str, t.Status] = 'keep',
+                transformers: Tuple[tr.Transformer, ...],
+                failure: Optional[str] = 'keep',
                 stream: Union[Iterator[Data], None, Literal["keep"]] = 'keep',
                 **fields
                 ) -> t.Data:
@@ -92,7 +99,7 @@ class Data(WithIdentification, li.LinAlgHelper):
 
         Parameters
         ----------
-        components
+        transformers
             List of Transformer objects that transforms this Data object.
         failure
             Updated value for failure.
@@ -115,10 +122,14 @@ class Data(WithIdentification, li.LinAlgHelper):
         matrices = self.matrices.copy()
         matrices.update(li.LinAlgHelper.fields2matrices(fields))
 
+        uuid, uuids = self._evolve_id(self.uuid, self.uuids, transformers, matrices)
+
         return Data(
-            history=self.history + components,
+            # TODO: optimize history, nesting/tree may be a better choice, to build upon the ref to the previous history
+            history=self.history + transformers,
             failure=failure, frozen=self.isfrozen, hollow=self.ishollow, stream=stream,
-            storage_info=self.storage_info, **matrices
+            storage_info=self.storage_info, uuid=uuid, uuids=uuids,
+            **matrices
         )
 
     @Property
@@ -222,7 +233,7 @@ class Data(WithIdentification, li.LinAlgHelper):
             return self
         result = transformer.rawtransform(self)
         if isinstance(result, dict):
-            return self.updated(components=(transformer,), **transformer.rawtransform(self))
+            return self.updated(transformers=(transformer,), **transformer.rawtransform(self))
         return result
 
     @Property
@@ -289,8 +300,10 @@ class Data(WithIdentification, li.LinAlgHelper):
             raise Exception(
                 f"Component {component} cannot access fields from Data objects that come from a "
                 f"failed/frozen/hollow pipeline! HINT: use unsafe{item}. \n"
-                f"HINT2: probably an ApplyUsing is missing, around a Predictor."
-            )
+                f"HINT2: probably the model/enhance flags are not being used properly around a Predictor.\n"
+                f"HINT3: To calculate training accuracy the 'train' Data should be inside the 'test' tuple; use Copy "
+                f"for that."
+            )  # TODO: breakdown this msg for each case.
         return item
 
     def _uuid_impl(self):
