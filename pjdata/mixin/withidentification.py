@@ -1,17 +1,25 @@
 """ Identifyable Module. """
 from abc import ABC, abstractmethod
-from functools import lru_cache
+from functools import cached_property
 
 from pjdata.aux.uuid import UUID
 
 
-class Identifiable(ABC):
+class WithIdentification(ABC):
     """ Identifiable mixin. """
 
-    # cannot use lru because we are overriding _hash_ with uuid --->>> loop
+    @cached_property
+    def name(self):
+        return self._name_impl()
+
+    @abstractmethod
+    def _name_impl(self):
+        pass
+
+    # cannot use lru for uuid() because we are overriding data._hash_ with uuid --->>> loop
     _uuid = None
 
-    @property # type: ignore
+    @property  # see comment above
     def uuid(self) -> UUID:
         """Lazily calculated unique identifier for this dataset.
 
@@ -23,12 +31,10 @@ class Identifiable(ABC):
         """
         if self._uuid is None:
             content = self._uuid_impl()
-            isUUID = isinstance(content, UUID)
-            self._uuid = content if isUUID else UUID(content.encode())
+            self._uuid = content if isinstance(content, UUID) else UUID(content.encode())
         return self._uuid
 
-    @property  # type: ignore
-    @lru_cache()
+    @cached_property
     def id(self):
         """
         Short uuID
@@ -38,8 +44,7 @@ class Identifiable(ABC):
         """
         return self.uuid.id
 
-    @property  # type: ignore
-    @lru_cache()
+    @cached_property
     def sid(self):
         """
         Short uuID

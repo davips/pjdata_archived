@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import json
 import typing
+from abc import ABC, abstractmethod
 from functools import lru_cache
-from typing import Union, Callable, Optional, overload, Any
+
+from pjdata.mixin.withserialization import WithSerialization
 
 if typing.TYPE_CHECKING:
     import pjdata.types as t
@@ -11,24 +13,18 @@ if typing.TYPE_CHECKING:
 from pjdata.aux.serialization import serialize, deserialize
 from pjdata.aux.util import Property
 from pjdata.aux.uuid import UUID
-from pjdata.mixin.identifiable import Identifiable
+from pjdata.mixin.withidentification import WithIdentification
 from pjdata.mixin.printable import Printable
 
 
-class Transformer(Identifiable, Printable):  # TODO: it should have some features from old Transformation class
+class Transformer(WithIdentification, Printable, ABC):
+    def __init__(self, component: WithSerialization):
+        """Base class for all transformers.
 
-    def __init__(
-            self,
-            component: Any,  # TODO: <-- use duck typing to import things from pjml into pjdata?
-            func: Optional[t.Transformation],  # problema
-            info: Optional[Union[
-                dict,
-                Callable[[], dict],
-                Callable[[t.Data], dict]  # TODO: improve this?
-            ]]
-    ):
-        self._uuid = component.cfg_uuid
-        self.name, self.path = component.name, component.path
+        ps. Assumes all components are symmetric. This class uses the same component details for both enhance and model.
+        """
+        # I.e. the transformation is always the same, no matter at which step (modeling/enhancing) we are.
+        self._name, self.path = component.name, component.path
         self.component_uuid = component.uuid
         self._serialized_component = component.serialized
         self._jsonable = {
@@ -39,15 +35,10 @@ class Transformer(Identifiable, Printable):  # TODO: it should have some feature
             'component': self._serialized_component
         }
 
-        self.func = func if func else lambda data: data
-        if callable(info):
-            self.info = info
-        elif isinstance(info, dict):
-            self.info = lambda: info
-        elif info is None:
-            self.info = lambda: {}
-        else:
-            raise TypeError('Unexpected info type. You should use, callable, dict or None. Not', type(info))
+    @Property
+    @lru_cache()
+    def longname(self):
+        return self.__class__.__name__ + f"[{self.name}]"
 
     @Property
     @lru_cache()
@@ -72,16 +63,21 @@ class Transformer(Identifiable, Printable):  # TODO: it should have some feature
         component = FakeComponent()
         return Transformer(component, )  # TODO: how to materialize func?
 
-    def transform(self, content: t.DataOrTup) -> t.DataOrTup:
+    def transform(self, content: t.DataOrTup, exit_on_error=True) -> t.DataOrTup:
         if isinstance(content, tuple):
             return tuple((dt.transformedby(self) for dt in content))
         # Todo: We should add exception handling here because self.func can raise errors
         # print(' transform... by', self.name)
         return content.transformedby(self)
 
-    def _uuid_impl(self):
-        return self._uuid
+    @abstractmethod
+    def rawtransform(self, content: t.Data) -> t.Result:
+        pass
 
     @Property
-    def jsonable(self):
+    def _jsonable_impl(self):
         return self._jsonable
+
+    def _name_impl(self):
+        return self._name
+

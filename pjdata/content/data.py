@@ -1,21 +1,21 @@
 from __future__ import annotations
 
-from functools import lru_cache
-from typing import Tuple, Optional, TYPE_CHECKING, Iterator, Union, Literal
+from functools import lru_cache, cached_property
+from typing import Tuple, Optional, TYPE_CHECKING, Iterator, Union, Literal, Dict
 
-from pjdata.mixin.identifiable import Identifiable
+from pjdata.mixin.withidentification import WithIdentification
 
 if TYPE_CHECKING:
     import pjdata.types as t
 import pjdata.aux.compression as com
 import pjdata.aux.uuid as u
 import pjdata.mixin.linalghelper as li
-import pjdata.transformer as tr
+import pjdata.transformer.transformer as tr
 from pjdata.aux.util import Property
 from pjdata.config import STORAGE_CONFIG
 
 
-class Data(Identifiable, li.LinAlgHelper):
+class Data(WithIdentification, li.LinAlgHelper):
     """Immutable lazy data for most machine learning scenarios.
 
     Parameters
@@ -62,6 +62,8 @@ class Data(Identifiable, li.LinAlgHelper):
             hollow: bool,
             stream: Optional[Iterator[Data]],
             storage_info: Optional[str],
+            uuid: u.UUID = None,
+            uuids: Dict[str, u.UUID] = None,
             **matrices,
     ):
         self._jsonable = matrices  # <-- TODO: put additional useful info
@@ -79,12 +81,17 @@ class Data(Identifiable, li.LinAlgHelper):
         self.storage_info = storage_info
         self.matrices = matrices
 
-        # Calculate UUIDs.
-        self._uuid, self.uuids = self._evolve_id(u.UUID(), {}, history, matrices)
+        # Calculate UUIDs if not provided (this usually means this Data object is a newborn).
+        if uuid:
+            if uuids is None:
+                raise Exception("Argument 'uuid' should be accompanied by a corresponding 'uuids'!")
+            self._uuid, self.uuids = uuid, uuids
+        else:
+            self._uuid, self.uuids = li.evolve_id(u.UUID(), {}, history, matrices)
 
     def updated(self,
                 transformers: Tuple[tr.Transformer, ...],
-                failure: Union[str, t.Status] = 'keep',
+                failure: Optional[str] = 'keep',
                 stream: Union[Iterator[Data], None, Literal["keep"]] = 'keep',
                 **fields
                 ) -> t.Data:
@@ -115,18 +122,21 @@ class Data(Identifiable, li.LinAlgHelper):
         matrices = self.matrices.copy()
         matrices.update(li.LinAlgHelper.fields2matrices(fields))
 
+        uuid, uuids = li.evolve_id(self.uuid, self.uuids, transformers, matrices)
+
         return Data(
+            # TODO: optimize history, nesting/tree may be a better choice, to build upon the ref to the previous history
             history=self.history + transformers,
             failure=failure, frozen=self.isfrozen, hollow=self.ishollow, stream=stream,
-            storage_info=self.storage_info, **matrices
+            storage_info=self.storage_info, uuid=uuid, uuids=uuids,
+            **matrices
         )
 
     @Property
     def jsonable(self):
         return self._jsonable
 
-    @Property
-    @lru_cache()
+    @cached_property
     def frozen(self):
         """TODO: Explicar aqui papéis de frozen...
             1- pipeline fim-precoce (p. ex. após SVM.enhance)
@@ -136,24 +146,26 @@ class Data(Identifiable, li.LinAlgHelper):
                     failure=self.failure,
                     frozen=True,
                     hollow=self.ishollow,
-                    stream=None,
+                    stream=self.stream,
                     storage_info=self.storage_info,
                     **self.matrices)
 
-    @Property
     @lru_cache()
-    def hollow(self: t.Data, transformers):
-        """Create a temporary hollow (only Persistence can fill it) Data object."""
-        return Data(history=self.history + transformers,
+    def hollow(self: t.Data, transformer: tr.Transformer):
+        """Create a temporary hollow Data object (only Persistence can fill it)."""
+        uuid, uuids = li.evolve_id(self.uuid, self.uuids, (transformer,), self.matrices)
+        return Data(history=self.history,
                     failure=self.failure,
                     frozen=self.isfrozen,
                     hollow=True,
-                    stream=None,
+                    stream=self.stream,
                     storage_info=self.storage_info,
+                    uuid=uuid,
+                    uuids=uuids,
                     **self.matrices)
 
     @lru_cache()
-    def field(self, name, block=False, component="undefined"):
+    def field(self, name, block=False, context: WithIdentification = "undefined"):
         """
         Safe access to a field, with a friendly error message.
 
@@ -163,7 +175,7 @@ class Data(Identifiable, li.LinAlgHelper):
             Name of the field.
         block
             Whether to wait for the value or to raise FieldNotReady exception if it is not readily available.
-        component
+        context
             Scope hint about origin of the problem.
 
         Returns
@@ -171,12 +183,12 @@ class Data(Identifiable, li.LinAlgHelper):
         Matrix, vector or scalar
         """
         # TODO: better organize this code
-        name = self._remove_unsafe_prefix(name, component)
+        name = self._remove_unsafe_prefix(name, context)
         mname = name.upper() if len(name) == 1 else name
 
         # Check existence of the field.
         if mname not in self.matrices:
-            comp = component.name if "name" in dir(component) else component
+            comp = context.name if "name" in dir(context) else context
             raise MissingField(
                 f"\n\nLast transformation:\n{self.history[-1]} ... \n"
                 f" Data object <{self}>...\n"
@@ -191,7 +203,7 @@ class Data(Identifiable, li.LinAlgHelper):
         # Fetch from storage?...
         if isinstance(m, u.UUID):
             if self.storage_info is None:
-                comp = component.name if "name" in dir(component) else component
+                comp = context.name if "name" in dir(context) else context
                 raise Exception("Storage not set! Unable to fetch " + m.id, "requested by", comp)
             print(">>>> fetching field", name, m.id)
             self.matrices[mname] = m = self._fetch_matrix(m.id)
@@ -210,18 +222,20 @@ class Data(Identifiable, li.LinAlgHelper):
         elif name in ["y", "z"]:
             return self._mat2vec(m)
         else:
-            comp = component.name if "name" in dir(component) else component
+            comp = context.name if "name" in dir(context) else context
             raise Exception("Unexpected lower letter:", m, "requested by", comp)
 
     def transformedby(self, transformer: tr.Transformer) -> t.Data:
         """Return this Data object transformed by func.
 
         Return itself if it is frozen or failed."""
+        # ps. It is preferable to have this method in Data instead of Transformer because of the different handlings
+        # depending on the type of content: Data, NoData.
         if self.isfrozen or self.failure:
             return self
-        result = transformer.func(self)
+        result = transformer.rawtransform(self)
         if isinstance(result, dict):
-            return self.updated(transformers=(transformer,), **transformer.func(self))
+            return self.updated(transformers=(transformer,), **result)
         return result
 
     @Property
@@ -288,8 +302,10 @@ class Data(Identifiable, li.LinAlgHelper):
             raise Exception(
                 f"Component {component} cannot access fields from Data objects that come from a "
                 f"failed/frozen/hollow pipeline! HINT: use unsafe{item}. \n"
-                f"HINT2: probably an ApplyUsing is missing, around a Predictor."
-            )
+                f"HINT2: probably the model/enhance flags are not being used properly around a Predictor.\n"
+                f"HINT3: To calculate training accuracy the 'train' Data should be inside the 'test' tuple; use Copy "
+                f"for that."
+            )  # TODO: breakdown this msg for each case.
         return item
 
     def _uuid_impl(self):
@@ -321,6 +337,10 @@ class Data(Identifiable, li.LinAlgHelper):
 
     def __hash__(self):
         return hash(self.uuid)
+
+    def _name_impl(self):
+        # return self._name
+        raise NotImplementedError("We need to decide if Data has a name")  # <-- TODO
 
 
 class MissingField(Exception):

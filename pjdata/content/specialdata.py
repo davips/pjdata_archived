@@ -46,27 +46,28 @@ class NoData(type):
     id = uuid.id
     uuids: dict = {}
     history: List[tr.Transformer] = []
+    stream = None
     matrices: Dict[str, t.Field] = {}
-    failure: Optional[str] = None
+    failure: str = None
     isfrozen = False
     ishollow = False
     allfrozen = False  # TODO: is allfrozen still a thing
     storage_info = None
 
     @staticmethod
-    def hollow(transformers: Tuple[tr.Transformer]) -> d.Data:
+    def hollow(transformer: tr.Transformer) -> d.Data:
         """A light Data object, i.e. without matrices."""
         # noinspection PyCallByClass
-        return d.Data.hollow(NoData, transformers)
+        return d.Data.hollow(NoData, transformer)
 
     @staticmethod
     def transformedby(transformer: tr.Transformer):
         """Return this Data object transformed by func.
 
-        Return itself if it is frozen or failed."""
-        result = transformer.func(NoData)
+        Return itself if it is frozen or failed.        """
+        result = transformer.rawtransform(NoData)
         if isinstance(result, dict):
-            return NoData.updated(transformers=(transformer,), **transformer.func(NoData))
+            return NoData.updated(transformers=(transformer,), **result)
         return result
 
     @staticmethod
