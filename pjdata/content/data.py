@@ -235,7 +235,7 @@ class Data(WithIdentification, li.LinAlgHelper):
             return self
         result = transformer.rawtransform(self)
         if isinstance(result, dict):
-            return self.updated(transformers=(transformer,), **transformer.rawtransform(self))
+            return self.updated(transformers=(transformer,), **result)
         return result
 
     @Property
