@@ -5,8 +5,6 @@ import numpy as np
 
 class CustomJSONEncoder(JSONEncoder):
     def default(self, obj):
-        print("obj: ", type(obj))
-
         if obj is not None:
             from pjdata.aux.uuid import UUID
 

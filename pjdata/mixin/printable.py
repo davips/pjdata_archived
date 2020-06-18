@@ -51,9 +51,6 @@ class Printable:
         else:
             jsonable = self.jsonable
 
-        print("Printing: ", self.__class__)
-        print("jsonable: ", type(jsonable))
-
         if not self.pretty_printing:
             js_str = json.dumps(
                 jsonable,
