@@ -4,7 +4,6 @@ from abc import abstractmethod
 from functools import cached_property
 
 from pjdata import glconfig
-from pjdata.aux.util import Property
 
 
 def enable_global_pretty_printing():
@@ -19,6 +18,7 @@ def disable_global_pretty_printing():
 
 class Printable:
     """Mixin class to deal with string printing style"""
+
     pretty_printing = glconfig.PRETTY_PRINTING
 
     @cached_property
@@ -37,27 +37,41 @@ class Printable:
         """Disable the pretty-printing."""
         self.pretty_printing = False
 
-    def __str__(self, depth: str = ''):
+    def __str__(self, depth: str = ""):
         # pylint: disable=import-outside-toplevel
         from pjdata.transformer.transformer import Transformer
+
         # pylint: disable=import-outside-toplevel
         from pjdata.aux.customjsonencoder import CustomJSONEncoder
 
         if isinstance(self, Transformer):
             # Taking transformer out of string for a better printing.
-            jsonable = self._jsonable_impl.copy()
-            jsonable['component'] = json.loads(jsonable['component'])
+            jsonable = self.jsonable.copy()
+            jsonable["component"] = json.loads(jsonable["component"])
         else:
-            jsonable = self._jsonable_impl
+            jsonable = self.jsonable
+
+        print("Printing: ", self.__class__)
+        print("jsonable: ", type(jsonable))
 
         if not self.pretty_printing:
-            js_str = json.dumps(jsonable, cls=CustomJSONEncoder,
-                                sort_keys=False, indent=0, ensure_ascii=False)
-            return js_str.replace('\n', '')
+            js_str = json.dumps(
+                jsonable,
+                cls=CustomJSONEncoder,
+                sort_keys=False,
+                indent=0,
+                ensure_ascii=False,
+            )
+            return js_str.replace("\n", "")
 
-        js_str = json.dumps(jsonable, cls=CustomJSONEncoder,
-                            sort_keys=False, indent=4, ensure_ascii=False)
-        return js_str.replace('\n', '\n' + depth)
+        js_str = json.dumps(
+            jsonable,
+            cls=CustomJSONEncoder,
+            sort_keys=False,
+            indent=4,
+            ensure_ascii=False,
+        )
+        return js_str.replace("\n", "\n" + depth)
 
     __repr__ = __str__
     # def __repr__(self):

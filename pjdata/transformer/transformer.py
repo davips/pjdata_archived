@@ -74,7 +74,6 @@ class Transformer(WithIdentification, Printable, ABC):
     def rawtransform(self, content: t.Data) -> t.Result:
         pass
 
-    @Property
     def _jsonable_impl(self):
         return self._jsonable
 
