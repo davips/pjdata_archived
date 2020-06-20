@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache, cached_property
-from typing import Tuple, Optional, TYPE_CHECKING, Iterator, Union, Literal, Dict
+from typing import Tuple, Optional, TYPE_CHECKING, Iterator, Union, Literal, Dict, List
 
 from pjdata.mixin.withidentification import WithIdentification
 
@@ -61,7 +61,8 @@ class Data(WithIdentification, li.LinAlgHelper):
             frozen: bool,
             hollow: bool,
             stream: Optional[Iterator[Data]],
-            storage_info: Optional[str],
+            target: List[str] = None,  # Fields precedence when comparing which data is greater.
+            storage_info: str = None,
             uuid: u.UUID = None,
             uuids: Dict[str, u.UUID] = None,
             **matrices,
@@ -73,11 +74,13 @@ class Data(WithIdentification, li.LinAlgHelper):
         #  volatile fields
         #  dna property?
 
+        self.target = ['s', 'r'] if target is None else target
         self.history = history
         self._failure = failure
         self._frozen = frozen
         self._hollow = hollow
         self.stream = stream
+        self._target = [field for field in self.target if field.upper() in matrices]
         self.storage_info = storage_info
         self.matrices = matrices
 
@@ -337,6 +340,12 @@ class Data(WithIdentification, li.LinAlgHelper):
 
     def __hash__(self):
         return hash(self.uuid)
+
+    def __lt__(self, other):
+        """Amenity to ease pipeline result comparisons. 'A > B' means A is better than B."""
+        for name in self._target:
+            return self.field(name) < other.field(name, context='comparison between Data objects')
+        return Exception("Impossible to make comparisons. None of the target fields are available:", self.target)
 
     def _name_impl(self):
         # return self._name
