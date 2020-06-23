@@ -17,7 +17,7 @@ from pjdata.mixin.withidentification import WithIdentification
 from pjdata.mixin.printable import Printable
 
 
-class Transformer(WithIdentification, Printable, ABC):
+class Transformer(WithSerialization, Printable, ABC):
     def __init__(self, component: WithSerialization):
         """Base class for all transformers.
 
@@ -29,6 +29,7 @@ class Transformer(WithIdentification, Printable, ABC):
         self._serialized_component = component.serialized
         self._jsonable = {
             'uuid': self.uuid,
+            'cfuuid': component.cfuuid,
             'name': self.name,
             'path': self.path,
             'component_uuid': component.uuid,
@@ -50,18 +51,25 @@ class Transformer(WithIdentification, Printable, ABC):
     def config(self):
         return deserialize(self._serialized_component)
 
-    @staticmethod
-    def materialize(serialized):
+    @classmethod
+    def materialize(cls, serialized):
         jsonable = json.loads(serialized)
 
-        class FakeComponent:
-            name = jsonable['name']
+        class FakeComponent(WithSerialization):
             path = jsonable['path']
-            uuid = UUID(jsonable['component_uuid'])
             serialized = jsonable['component']
 
+            def _name_impl(self):
+                return jsonable['name']
+
+            def _uuid_impl(self):
+                return UUID(jsonable['component_uuid'])
+
+            def _cfuuid_impl(self):
+                return jsonable
+
         component = FakeComponent()
-        return Transformer(component, )  # TODO: how to materialize func?
+        return cls(component)  # TODO: how to materialize func?
 
     def transform(self, content: t.DataOrTup, exit_on_error=True) -> t.DataOrTup:
         if isinstance(content, tuple):
@@ -80,3 +88,5 @@ class Transformer(WithIdentification, Printable, ABC):
     def _name_impl(self):
         return self._name
 
+    def _cfuuid_impl(self):
+        raise Exception('Non sense access!')
