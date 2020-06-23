@@ -1,6 +1,6 @@
 """ Identifyable Module. """
 from abc import ABC, abstractmethod
-from functools import cached_property, lru_cache
+from functools import cached_property
 
 from pjdata.aux.uuid import UUID
 
@@ -34,7 +34,9 @@ class WithIdentification(ABC):
     def _compute_uuid(self) -> UUID:
         if self._uuid is None:
             content = self._uuid_impl()
-            self._uuid = content if isinstance(content, UUID) else UUID(content.encode())
+            self._uuid = (
+                content if isinstance(content, UUID) else UUID(content.encode())
+            )
         return self._uuid
 
     @cached_property
@@ -99,9 +101,8 @@ class WithIdentification(ABC):
     #     return self._compute_uuid().n
 
     def isequal(self, other):
-        if not hasattr(other, 'uuid'):
+        if not hasattr(other, "uuid"):
             return False
         # TODO: check why compare uuid not work (I think is something related to self.m)
         # return self.uuid == other.uuid
         return self.uuid.n == other.uuid.n
-
