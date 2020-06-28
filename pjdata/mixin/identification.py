@@ -90,10 +90,21 @@ class WithIdentification(ABC):
     #
     # Portanto, se não conseguirmos solução melhor, acho que o "isequal" será alternativa mais conveniente
 
+    # UPDATE:
+    # dict e set (incluindo @property e @lru_cache) provavelmente fazem o que toda hash table(?) faz:
+    # usam primeiro __hash__ para encontrar o registro em O(1) e depois __eq__ para encontrar o item exato se há colisão
+    # O problema parece ter surgido quando coloquei o Component na dança do Identification.
+    # Isso azedou o mecanismo de property que acaba quebrando o stream por algum motivo obscuro.
+    # Com relação a tempo de processamento, podemos verificar se há caches esquecidos, ou excesso de funções encadeadas.
+    #                                                                                           [davi]
+
     def __eq__(self, other) -> bool:
-        if not hasattr(other, 'uuid'):
+        if not isinstance(other, WithIdentification):  # Should never happen, so it is the first check.
+            raise Exception('Cannot compare', self.name, 'with', other.name, ' which has no UUID!')
+        if not isinstance(other, self.__class__):
             return False
+        # raise Exception  # <- usei desse recurso para encontrar a origem do mal [davi]
         return self.uuid == other.uuid
 
     def __hash__(self) -> int:
-        return self._compute_uuid().n
+        return self.uuid.n
