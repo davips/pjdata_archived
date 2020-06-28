@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import lru_cache, cached_property
 from typing import Tuple, Optional, TYPE_CHECKING, Iterator, Union, Literal, Dict, List
 
-from pjdata.mixin.identification import WithIdentification
+from pjdata.mixin.identification import WithIdentification, WithEquality
 
 if TYPE_CHECKING:
     import pjdata.types as t
@@ -15,7 +15,7 @@ from pjdata.aux.util import Property
 from pjdata.config import STORAGE_CONFIG
 
 
-class Data(WithIdentification, li.LinAlgHelper):
+class Data(WithIdentification, WithEquality, li.LinAlgHelper):
     """Immutable lazy data for most machine learning scenarios.
 
     Parameters
