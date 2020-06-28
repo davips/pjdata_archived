@@ -40,7 +40,7 @@ class Property(object):
     Github, issue #1362
     """
 
-    def __init__(self, fget=None, fset=None, fdel=None, doc=None):
+    def __init__(self, fget=None, doc=None):
         self.fget = fget
         if doc is None and fget is not None:
             doc = fget.__doc__
