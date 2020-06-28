@@ -61,7 +61,7 @@ class Data(WithIdentification, li.LinAlgHelper):
             frozen: bool,
             hollow: bool,
             stream: Optional[Iterator[Data]],
-            target: List[str] = None,  # Fields precedence when comparing which data is greater.
+            target: str = 's,r',  # Fields precedence when comparing which data is greater.
             storage_info: str = None,
             uuid: u.UUID = None,
             uuids: Dict[str, u.UUID] = None,
@@ -74,7 +74,7 @@ class Data(WithIdentification, li.LinAlgHelper):
         #  volatile fields
         #  dna property?
 
-        self.target = ['s', 'r'] if target is None else target
+        self.target = target.split(',')
         self.history = history
         self._failure = failure
         self._frozen = frozen
@@ -155,7 +155,9 @@ class Data(WithIdentification, li.LinAlgHelper):
 
     @lru_cache()
     def hollow(self: t.Data, transformer: tr.Transformer):
-        """Create a temporary hollow Data object (only Persistence can fill it)."""
+        """Create a temporary hollow Data object (only Persistence can fill it).
+
+        ps. History is not touched, only uuid."""
         uuid, uuids = li.evolve_id(self.uuid, self.uuids, (transformer,), self.matrices)
         return Data(history=self.history,
                     failure=self.failure,
@@ -232,10 +234,10 @@ class Data(WithIdentification, li.LinAlgHelper):
         """Return this Data object transformed by func.
 
         Return itself if it is frozen or failed."""
-        # ps. It is preferable to have this method in Data instead of Transformer because of the different handlings
+        # ps. It is preferable to have this method in Data instead of Transformer because of the different handling
         # depending on the type of content: Data, NoData.
         if self.isfrozen or self.failure:
-            return self
+            return self # TODO: updated((PHolder,)) ?
         result = transformer.rawtransform(self)
         if isinstance(result, dict):
             return self.updated(transformers=(transformer,), **result)
