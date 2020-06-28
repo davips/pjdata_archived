@@ -157,6 +157,16 @@ class Data(WithIdentification, li.LinAlgHelper):
                     storage_info=self.storage_info,
                     **self.matrices)
 
+    @cached_property
+    def unfrozen(self):  # TODO: check if component Unfreeze is really needed
+        return Data(history=self.history,
+                    failure=self.failure,
+                    frozen=False,
+                    hollow=self.ishollow,
+                    stream=self.stream,
+                    storage_info=self.storage_info,
+                    **self.matrices)
+
     @lru_cache()
     def hollow(self: t.Data, transformer: tr.Transformer):
         """Create a temporary hollow Data object (only Persistence can fill it).
