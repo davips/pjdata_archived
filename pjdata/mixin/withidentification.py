@@ -90,19 +90,10 @@ class WithIdentification(ABC):
     #
     # Portanto, se não conseguirmos solução melhor, acho que o "isequal" será alternativa mais conveniente
 
-    # def __eq__(self, other) -> bool:
-    #     if not hasattr(other, 'uuid'):
-    #         return False
-    #     # TODO: check why compare uuid not work
-    #     # return self.uuid == other.uuid
-    #     return self.uuid.n == other.uuid.n
-    #
-    # def __hash__(self) -> int:
-    #     return self._compute_uuid().n
-
-    def isequal(self, other):
-        if not hasattr(other, "uuid"):
+    def __eq__(self, other) -> bool:
+        if not hasattr(other, 'uuid'):
             return False
-        # TODO: check why compare uuid not work (I think is something related to self.m)
-        # return self.uuid == other.uuid
-        return self.uuid.n == other.uuid.n
+        return self.uuid == other.uuid
+
+    def __hash__(self) -> int:
+        return self._compute_uuid().n
