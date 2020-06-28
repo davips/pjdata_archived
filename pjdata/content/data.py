@@ -95,6 +95,7 @@ class Data(WithIdentification, li.LinAlgHelper):
     def updated(self,
                 transformers: Tuple[tr.Transformer, ...],
                 failure: Optional[str] = 'keep',
+                frozen: Union[bool, Literal['keep']] = 'keep',
                 stream: Union[Iterator[Data], None, Literal["keep"]] = 'keep',
                 **fields
                 ) -> t.Data:
@@ -102,6 +103,7 @@ class Data(WithIdentification, li.LinAlgHelper):
 
         Parameters
         ----------
+        frozen
         transformers
             List of Transformer objects that transforms this Data object.
         failure
@@ -120,6 +122,8 @@ class Data(WithIdentification, li.LinAlgHelper):
         """
         if failure == 'keep':
             failure = self.failure
+        if frozen == 'keep':
+            frozen = self.isfrozen
         if stream == 'keep':
             stream = self.stream
         matrices = self.matrices.copy()
@@ -130,7 +134,7 @@ class Data(WithIdentification, li.LinAlgHelper):
         return Data(
             # TODO: optimize history, nesting/tree may be a better choice, to build upon the ref to the previous history
             history=self.history + transformers,
-            failure=failure, frozen=self.isfrozen, hollow=self.ishollow, stream=stream,
+            failure=failure, frozen=frozen, hollow=self.ishollow, stream=stream,
             storage_info=self.storage_info, uuid=uuid, uuids=uuids,
             **matrices
         )
@@ -305,7 +309,7 @@ class Data(WithIdentification, li.LinAlgHelper):
 
         if self.failure or self.isfrozen or self.ishollow:
             raise Exception(
-                f"Component {component} cannot access fields from Data objects that come from a "
+                f"Component {component} cannot access fields ({item}) from Data objects that come from a "
                 f"failed/frozen/hollow pipeline! HINT: use unsafe{item}. \n"
                 f"HINT2: probably the model/enhance flags are not being used properly around a Predictor.\n"
                 f"HINT3: To calculate training accuracy the 'train' Data should be inside the 'test' tuple; use Copy "

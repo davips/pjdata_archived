@@ -29,9 +29,6 @@ class WithIdentification(ABC):
         -------
             A unique identifier UUID object.
         """
-        return self._compute_uuid()
-
-    def _compute_uuid(self) -> UUID:
         if self._uuid is None:
             content = self._uuid_impl()
             self._uuid = (
