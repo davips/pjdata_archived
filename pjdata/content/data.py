@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from functools import lru_cache, cached_property
-from typing import Tuple, Optional, TYPE_CHECKING, Iterator, Union, Literal, Dict, List
+from typing import Tuple, Optional, TYPE_CHECKING, Iterator, Union, Literal, Dict
 
-from pjdata.mixin.identification import WithIdentification, WithEquality
+from pjdata.mixin.identification import WithIdentification
 
 if TYPE_CHECKING:
     import pjdata.types as t
@@ -15,7 +15,7 @@ from pjdata.aux.util import Property
 from pjdata.config import STORAGE_CONFIG
 
 
-class Data(WithIdentification, WithEquality, li.LinAlgHelper):
+class Data(WithIdentification, li.LinAlgHelper):
     """Immutable lazy data for most machine learning scenarios.
 
     Parameters
@@ -237,7 +237,7 @@ class Data(WithIdentification, WithEquality, li.LinAlgHelper):
         # ps. It is preferable to have this method in Data instead of Transformer because of the different handling
         # depending on the type of content: Data, NoData.
         if self.isfrozen or self.failure:
-            return self # TODO: updated((PHolder,)) ?
+            return self  # TODO: updated((PHolder,)) ?
         result = transformer.rawtransform(self)
         if isinstance(result, dict):
             return self.updated(transformers=(transformer,), **result)
@@ -330,22 +330,6 @@ class Data(WithIdentification, WithEquality, li.LinAlgHelper):
         # print('getting attribute...', item)
         return super().__getattribute__(item)
 
-    # It does not work because of __hash__
-    # def __eq__(self, other):
-    #     """Overrides the default implementation"""
-    #     if isinstance(other, Data):
-    #         return self.uuid00 == other.uuid00
-    #     return False
-
-    def __eq__(self, other):
-        """Overrides the default implementation"""
-        if not isinstance(other, Data):
-            return False
-        return self.uuid == other.uuid
-
-    def __hash__(self):
-        return hash(self.uuid)
-
     def __lt__(self, other):
         """Amenity to ease pipeline result comparisons. 'A > B' means A is better than B."""
         for name in self._target:
@@ -355,6 +339,16 @@ class Data(WithIdentification, WithEquality, li.LinAlgHelper):
     def _name_impl(self):
         # return self._name
         raise NotImplementedError("We need to decide if Data has a name")  # <-- TODO
+
+    def __eq__(self, other: t.Data) -> bool:
+        # Checks removed for speed (isinstance is said to be slow...)
+        # from pjdata.content.specialdata import NoData
+        # if other is not NoData or not isinstance(other, Data):  # TODO: <-- check for other types of Data?
+        #     return False
+        return self.uuid == other.uuid
+
+    def __hash__(self) -> int:
+        return hash(self.uuid)
 
 
 class MissingField(Exception):

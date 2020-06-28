@@ -5,24 +5,6 @@ from functools import cached_property
 from pjdata.aux.uuid import UUID
 
 
-class WithEquality(ABC):
-    """Mixin for classes that need to be hashable to provide items for sets/dicts/lru) or be compared by UUID.
-    This mixin needs WithIdentification, but cannot enforce it due to performance reasons.
-    """
-
-    def __eq__(self, other) -> bool:
-        # TODO: some checks might be removed for speed (isinstance is said to be slow...)
-        if not isinstance(other, WithEquality):  # Should never happen, so it is the first check.
-            raise Exception('Cannot compare', self.name, 'with', other.name, ' which has no UUID!')
-        if not isinstance(other, self.__class__):
-            return False
-        # raise Exception  # <- usei desse recurso para encontrar a origem do mal [davi]
-        return self.uuid == other.uuid
-
-    def __hash__(self) -> int:
-        return self.uuid.n
-
-
 class WithIdentification(ABC):
     """ Identifiable mixin. """
 

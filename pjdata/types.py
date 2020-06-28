@@ -8,7 +8,7 @@ from numpy import ndarray  # type: ignore
 import pjdata.content.data as d
 import pjdata.content.specialdata as s
 
-Data = Union[Type[s.NoData], d.Data]
+Data = Union[Type[s.NoData], d.Data]    # TODO: <-- check for other types of Data?
 # HINT: Multi containing a Sink can produce heterogeneous tuples
 DataTup = Tuple[Data, ...]
 DataOrTup = Union[Data, DataTup]
