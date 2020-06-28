@@ -5,7 +5,7 @@ import typing
 from abc import ABC, abstractmethod
 from functools import lru_cache
 
-from pjdata.mixin.withserialization import WithSerialization
+from pjdata.mixin.serialization import WithSerialization
 
 if typing.TYPE_CHECKING:
     import pjdata.types as t
@@ -13,11 +13,11 @@ if typing.TYPE_CHECKING:
 from pjdata.aux.serialization import serialize, deserialize
 from pjdata.aux.util import Property
 from pjdata.aux.uuid import UUID
-from pjdata.mixin.withidentification import WithIdentification
-from pjdata.mixin.printable import Printable
+from pjdata.mixin.identification import WithIdentification
+from pjdata.mixin.printing import withPrinting
 
 
-class Transformer(WithSerialization, Printable, ABC):
+class Transformer(WithSerialization, withPrinting, ABC):
     def __init__(self, component: WithSerialization):
         """Base class for all transformers.
 

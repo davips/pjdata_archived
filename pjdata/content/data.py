@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import lru_cache, cached_property
 from typing import Tuple, Optional, TYPE_CHECKING, Iterator, Union, Literal, Dict, List
 
-from pjdata.mixin.withidentification import WithIdentification
+from pjdata.mixin.identification import WithIdentification
 
 if TYPE_CHECKING:
     import pjdata.types as t

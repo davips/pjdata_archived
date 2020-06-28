@@ -16,7 +16,7 @@ def disable_global_pretty_printing():
     glconfig.PRETTY_PRINTING = False
 
 
-class Printable:
+class withPrinting:
     """Mixin class to deal with string printing style"""
 
     pretty_printing = glconfig.PRETTY_PRINTING
