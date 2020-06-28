@@ -338,6 +338,9 @@ class Data(WithIdentification, li.LinAlgHelper):
     #     return False
 
     def __eq__(self, other):
+        """Overrides the default implementation"""
+        if not isinstance(other, Data):
+            return False
         return self.uuid == other.uuid
 
     def __hash__(self):
