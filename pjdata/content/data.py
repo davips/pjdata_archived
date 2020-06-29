@@ -251,7 +251,7 @@ class Data(WithIdentification, li.LinAlgHelper):
         # ps. It is preferable to have this method in Data instead of Transformer because of the different handling
         # depending on the type of content: Data, NoData.
         if self.isfrozen or self.failure:
-            return self  # TODO: updated((PHolder,)) ?
+            return self.updated((transformer.pholder,))  # TODO: check if Pholder here is what we want
         result = transformer.rawtransform(self)
         if isinstance(result, dict):
             return self.updated(transformers=(transformer,), **result)

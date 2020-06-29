@@ -23,6 +23,9 @@ class Transformer(WithSerialization, withPrinting, ABC):
 
         ps. Assumes all components are symmetric. This class uses the same component details for both enhance and model.
         """
+        self.component = component
+
+        # TODO: put all of this inside Transformation
         # I.e. the transformation is always the same, no matter at which step (modeling/enhancing) we are.
         self._name, self.path = component.name, component.path
         self.component_uuid = component.uuid
@@ -45,6 +48,12 @@ class Transformer(WithSerialization, withPrinting, ABC):
     @lru_cache()
     def serialized(self):
         return serialize(self)
+
+    @Property
+    @lru_cache()
+    def pholder(self):
+        from pjdata.transformer.pholder import PHolder
+        return PHolder(self.component)
 
     @Property
     @lru_cache()
