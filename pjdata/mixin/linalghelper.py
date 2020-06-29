@@ -3,9 +3,9 @@ from typing import Dict, Tuple, Optional
 import numpy as np  # type: ignore
 from numpy import ndarray
 
-import typing
+import typing as t
 
-if typing.TYPE_CHECKING:
+if t.TYPE_CHECKING:
     import pjdata.types as t
 
 import pjdata.aux.uuid as u
@@ -68,7 +68,7 @@ class LinAlgHelper:  # TODO: dismiss this mixin and create a bunch of functions
         return matrices
 
 
-def evolve(uuid: u.UUID, transformers: Tuple[tr.Transformer, ...]) -> u.UUID:
+def evolve(uuid: u.UUID, transformers: t.Iterable[tr.Transformer]) -> u.UUID:
     for transformer in transformers:
         uuid *= transformer.uuid
     return uuid
@@ -77,7 +77,7 @@ def evolve(uuid: u.UUID, transformers: Tuple[tr.Transformer, ...]) -> u.UUID:
 def evolve_id(
         uuid: u.UUID,
         uuids: Dict[str, u.UUID],
-        transformers: Tuple[tr.Transformer, ...],
+        transformers: t.Iterable[tr.Transformer],
         matrices: Dict[str, "t.Field"],
 ) -> Tuple[u.UUID, Dict[str, u.UUID]]:
     """Return UUID/UUIDs after transformations."""

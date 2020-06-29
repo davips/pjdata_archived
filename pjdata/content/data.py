@@ -3,6 +3,7 @@ from __future__ import annotations
 from functools import lru_cache, cached_property
 from typing import Tuple, Optional, TYPE_CHECKING, Iterator, Union, Literal, Dict
 
+from pjdata.history import History
 from pjdata.mixin.identification import WithIdentification
 
 if TYPE_CHECKING:
@@ -21,7 +22,7 @@ class Data(WithIdentification, li.LinAlgHelper):
     Parameters
     ----------
     history
-        A tuple of Transformer objects.
+        A History objects that represents a sequence of Transformations objects.
     failure
         The reason why the workflow that generated this Data object failed.
     frozen
@@ -56,7 +57,7 @@ class Data(WithIdentification, li.LinAlgHelper):
 
     def __init__(
             self,
-            history: Tuple[tr.Transformer, ...],
+            history: History,
             failure: Optional[str],
             frozen: bool,
             hollow: bool,
@@ -133,7 +134,7 @@ class Data(WithIdentification, li.LinAlgHelper):
 
         return Data(
             # TODO: optimize history, nesting/tree may be a better choice, to build upon the ref to the previous history
-            history=self.history + transformers,
+            history=self.history.extend(transformers),
             failure=failure, frozen=frozen, hollow=self.ishollow, stream=stream,
             storage_info=self.storage_info, uuid=uuid, uuids=uuids,
             **matrices
