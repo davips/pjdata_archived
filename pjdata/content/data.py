@@ -264,7 +264,7 @@ class Data(WithIdentification, li.LinAlgHelper):
         return self.field("X"), self.field("y")
 
     @Property
-    def allfrozen(self):
+    def allfrozen(self):  #TODO:remover?
         return False
 
     @Property
