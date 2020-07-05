@@ -264,10 +264,6 @@ class Data(WithIdentification, li.LinAlgHelper):
         return self.field("X"), self.field("y")
 
     @Property
-    def allfrozen(self):  #TODO:remover?
-        return False
-
-    @Property
     @lru_cache()
     def matrix_names(self):
         return list(self.matrices.keys())
