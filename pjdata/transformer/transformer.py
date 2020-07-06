@@ -18,6 +18,8 @@ from pjdata.mixin.printing import withPrinting
 
 
 class Transformer(WithSerialization, withPrinting, ABC):
+    ispholder = False
+
     def __init__(self, component: WithSerialization):
         """Base class for all transformers.
 

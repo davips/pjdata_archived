@@ -134,7 +134,7 @@ class Data(WithIdentification, li.LinAlgHelper):
 
         return Data(
             # TODO: optimize history, nesting/tree may be a better choice, to build upon the ref to the previous history
-            history=self.history.extend(transformers),
+            history=self.history << transformers,
             failure=failure, frozen=frozen, hollow=self.ishollow, stream=stream,
             storage_info=self.storage_info, uuid=uuid, uuids=uuids,
             **matrices
