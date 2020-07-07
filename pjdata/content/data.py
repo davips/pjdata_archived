@@ -3,8 +3,10 @@ from __future__ import annotations
 from functools import lru_cache, cached_property
 from typing import Tuple, Optional, TYPE_CHECKING, Iterator, Union, Literal, Dict
 
+from pjdata.aux.serialization import serialize, deserialize
 from pjdata.history import History
 from pjdata.mixin.identification import WithIdentification
+from pjdata.mixin.printing import withPrinting
 
 if TYPE_CHECKING:
     import pjdata.types as t
@@ -16,7 +18,7 @@ from pjdata.aux.util import Property
 from pjdata.config import STORAGE_CONFIG
 
 
-class Data(WithIdentification, li.LinAlgHelper):
+class Data(WithIdentification, withPrinting):
     """Immutable lazy data for most machine learning scenarios.
 
     Parameters
@@ -57,6 +59,8 @@ class Data(WithIdentification, li.LinAlgHelper):
 
     def __init__(
             self,
+            uuid: u.UUID,
+            uuids: Dict[str, u.UUID],
             history: History,
             failure: Optional[str],
             frozen: bool,
@@ -64,16 +68,15 @@ class Data(WithIdentification, li.LinAlgHelper):
             stream: Optional[Iterator[Data]],
             target: str = 's,r',  # Fields precedence when comparing which data is greater.
             storage_info: str = None,
-            uuid: u.UUID = None,
-            uuids: Dict[str, u.UUID] = None,
             **matrices,
     ):
-        self._jsonable = matrices  # <-- TODO: put additional useful info
+        self._jsonable = [uuid, history, uuids]
         # TODO: Check if types (e.g. Mt) are compatible with values (e.g. M).
         # TODO:
-        #  'name' and 'desc'
-        #  volatile fields
-        #  dna property?
+        #  1- 'name' and 'desc'
+        #  2- volatile fields
+        #  3- dna property?
+        #  4- task?
 
         self.target = target.split(',')
         self.history = history
@@ -84,14 +87,7 @@ class Data(WithIdentification, li.LinAlgHelper):
         self._target = [field for field in self.target if field.upper() in matrices]
         self.storage_info = storage_info
         self.matrices = matrices
-
-        # Calculate UUIDs if not provided (this usually means this Data object is a newborn).
-        if uuid:
-            if uuids is None:
-                raise Exception("Argument 'uuid' should be accompanied by a corresponding 'uuids'!")
-            self._uuid, self.uuids = uuid, uuids
-        else:
-            self._uuid, self.uuids = li.evolve_id(u.UUID(), {}, history, matrices)
+        self._uuid, self.uuids = uuid, uuids
 
     def updated(self,
                 transformers: Tuple[tr.Transformer, ...],
@@ -128,7 +124,7 @@ class Data(WithIdentification, li.LinAlgHelper):
         if stream == 'keep':
             stream = self.stream
         matrices = self.matrices.copy()
-        matrices.update(li.LinAlgHelper.fields2matrices(fields))
+        matrices.update(li.fields2matrices(fields))
 
         uuid, uuids = li.evolve_id(self.uuid, self.uuids, transformers, matrices)
 
@@ -156,6 +152,8 @@ class Data(WithIdentification, li.LinAlgHelper):
                     hollow=self.ishollow,
                     stream=self.stream,
                     storage_info=self.storage_info,
+                    uuid=self.uuid,
+                    uuids=self.uuids,
                     **self.matrices)
 
     @cached_property
@@ -166,6 +164,8 @@ class Data(WithIdentification, li.LinAlgHelper):
                     hollow=self.ishollow,
                     stream=self.stream,
                     storage_info=self.storage_info,
+                    uuid=self.uuid,
+                    uuids=self.uuids,
                     **self.matrices)
 
     @lru_cache()
@@ -210,10 +210,10 @@ class Data(WithIdentification, li.LinAlgHelper):
         if mname not in self.matrices:
             comp = context.name if "name" in dir(context) else context
             raise MissingField(
-                f"\n\nLast transformation:\n{self.history[-1]} ... \n"
+                f"\n\nLast transformation:\n{self.history.last} ... \n"
                 f" Data object <{self}>...\n"
                 f"...last transformed by "
-                f"{self.history[-1] and self.history[-1].name} does not "
+                f"{self.history.last and deserialize(self.history.last).name} does not "
                 f"provide field {name} needed by {comp} .\n"
                 f"Available matrices: {list(self.matrices.keys())}"
             )
@@ -333,8 +333,8 @@ class Data(WithIdentification, li.LinAlgHelper):
 
     def __getattr__(self, item):
         """Create shortcuts to fields, still passing through sanity check."""
-        if item == "Xy":
-            return self.Xy
+        # if item == "Xy":
+        #     return self.Xy
         if 0 < (len(item) < 3 or item.startswith("unsafe")):
             return self.field(item, "[direct access through shortcut]")
 

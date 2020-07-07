@@ -20,25 +20,28 @@ from pjdata.mixin.printing import withPrinting
 class Transformer(WithSerialization, withPrinting, ABC):
     ispholder = False
 
-    def __init__(self, component: WithSerialization):
+    def __init__(self, component: typing.Union[str, WithSerialization]):
         """Base class for all transformers.
 
         ps. Assumes all components are symmetric. This class uses the same component details for both enhance and model.
         """
-        self.component = component
-
-        # TODO: put all of this inside Transformation
         # I.e. the transformation is always the same, no matter at which step (modeling/enhancing) we are.
-        self._name, self.path = component.name, component.path
-        self.component_uuid = component.uuid
-        self._serialized_component = component.serialized
+        if isinstance(component, str):
+            self._name = component[5:15]
+            self._serialized_component = component
+        else:
+            self._name = component.name
+            self._serialized_component = component.serialized
+
+        # ALERT: This class and Leaf depend on this exact dict items for fast access without complete deserialization!
         self._jsonable = {
-            'uuid': self.uuid,
-            'cfuuid': component.cfuuid,
+            # 'cfuuid': component.cfuuid,
+            # 'component_uuid': component.uuid,
+            'component': self._serialized_component,
+            'id': self.__class__.__name__ + '@' + self.__module__,
             'name': self.name,
             'path': self.path,
-            'component_uuid': component.uuid,
-            'component': self._serialized_component
+            'uuid': self.uuid,
         }
 
     @Property
