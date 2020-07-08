@@ -46,6 +46,11 @@ class Transformer(WithSerialization, withPrinting, ABC):
 
     @Property
     @lru_cache()
+    def component(self):
+        return deserialize(self._serialized_component)
+
+    @Property
+    @lru_cache()
     def longname(self):
         return self.__class__.__name__ + f"[{self.name}]"
 

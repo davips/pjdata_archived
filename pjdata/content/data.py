@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache, cached_property
-from typing import Tuple, Optional, TYPE_CHECKING, Iterator, Union, Literal, Dict
+from typing import Tuple, Optional, TYPE_CHECKING, Iterator, Union, Literal, Dict, List
 
 from pjdata.aux.serialization import serialize, deserialize
 from pjdata.history import History
@@ -56,6 +56,7 @@ class Data(WithIdentification, withPrinting):
         Xt=['real', 'real', ['white', 'brown']]
         Yt=[['rabbit', 'mouse']]
     """
+    _Xy = None
 
     def __init__(
             self,
@@ -90,7 +91,7 @@ class Data(WithIdentification, withPrinting):
         self._uuid, self.uuids = uuid, uuids
 
     def updated(self,
-                transformers: Tuple[tr.Transformer, ...],
+                transformers: List[tr.Transformer],
                 failure: Optional[str] = 'keep',
                 frozen: Union[bool, Literal['keep']] = 'keep',
                 stream: Union[Iterator[Data], None, Literal["keep"]] = 'keep',
@@ -238,9 +239,9 @@ class Data(WithIdentification, withPrinting):
         if not name.islower():
             return m
         elif name in ["r", "s"]:
-            return self._mat2sca(m)
+            return li.mat2vec(m)
         elif name in ["y", "z"]:
-            return self._mat2vec(m)
+            return li.mat2vec(m)
         else:
             comp = context.name if "name" in dir(context) else context
             raise Exception("Unexpected lower letter:", m, "requested by", comp)
@@ -252,16 +253,16 @@ class Data(WithIdentification, withPrinting):
         # ps. It is preferable to have this method in Data instead of Transformer because of the different handling
         # depending on the type of content: Data, NoData.
         if self.isfrozen or self.failure:
-            return self.updated((transformer.pholder,))  # TODO: check if Pholder here is what we want
+            return self.updated([transformer.pholder])  # TODO: check if Pholder here is what we want
         result = transformer.rawtransform(self)
         if isinstance(result, dict):
             return self.updated(transformers=(transformer,), **result)
         return result
 
-    @Property
-    @lru_cache()
     def Xy(self):
-        return self.field("X"), self.field("y")
+        if self._Xy is None:
+            self._Xy = self.field("X"), self.field("y")
+        return self._Xy
 
     @Property
     @lru_cache()

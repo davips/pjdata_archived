@@ -24,7 +24,7 @@ def _as_column_vector(vec: ndarray) -> ndarray:
     return vec.reshape(len(vec), 1)
 
 
-def _mat2vec(m: ndarray, default: ndarray = None) -> ndarray:
+def mat2vec(m: ndarray, default: ndarray = None) -> ndarray:
     return default if m is None else _as_vector(m)
 
 
