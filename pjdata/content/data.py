@@ -14,7 +14,7 @@ import pjdata.aux.compression as com
 import pjdata.aux.uuid as u
 import pjdata.mixin.linalghelper as li
 import pjdata.transformer.transformer as tr
-from pjdata.aux.util import Property
+from pjdata.aux.util import Property, getname
 from pjdata.config import STORAGE_CONFIG
 
 
@@ -213,7 +213,7 @@ class Data(WithIdentification, withPrinting):
                 f"\n\nLast transformation:\n{self.history.last} ... \n"
                 f" Data object <{self}>...\n"
                 f"...last transformed by "
-                f"{self.history.last and deserialize(self.history.last).name} does not "
+                f"{self.history.last and getname(self.history.last)} does not "
                 f"provide field {name} needed by {comp} .\n"
                 f"Available matrices: {list(self.matrices.keys())}"
             )
