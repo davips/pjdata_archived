@@ -35,24 +35,6 @@ def flatten(lst):
     return [item for sublist in lst for item in sublist]
 
 
-def getname(txt: str) -> str:
-    """Extract the name of a serialized component/transformer.
-
-    We intend, here, to avoid useless instantiation of objects (ok, a premature optimization).
-
-    ps. Bureaucratic note: following the same function naming pattern as getattr().
-
-    Parameters
-    ----------
-    txt
-
-    Returns
-    -------
-    name
-    """
-    return txt.split('id')[1][6:].split('@')[0]
-
-
 class Property(object):
     """Substitute for the @property decorator due mypy conflicts.
 

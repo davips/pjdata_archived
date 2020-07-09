@@ -1,53 +1,56 @@
 from __future__ import annotations
 
 import json
-import typing
 from abc import ABC, abstractmethod
 from functools import lru_cache
 
-from pjdata.mixin.serialization import WithSerialization
+import pjdata.mixin.serialization as ser
+from typing import TYPE_CHECKING
 
-if typing.TYPE_CHECKING:
-    import pjdata.types as t
-
-from pjdata.aux.serialization import serialize, deserialize
 from pjdata.aux.util import Property
+
+if TYPE_CHECKING:
+    import pjdata.types as t
+    import pjdata.transformer.pholder as ph
+from pjdata.aux.serialization import serialize, deserialize
 from pjdata.aux.uuid import UUID
-from pjdata.mixin.identification import WithIdentification
 from pjdata.mixin.printing import withPrinting
 
 
-class Transformer(WithSerialization, withPrinting, ABC):
+class Transformer(ser.WithSerialization, withPrinting, ABC):
     ispholder = False
 
-    def __init__(self, component: typing.Union[str, WithSerialization]):
+    def __init__(self, component: t.Union[str, ser.WithSerialization]):
         """Base class for all transformers.
 
         ps. Assumes all components are symmetric. This class uses the same component details for both enhance and model.
-        """
-        # I.e. the transformation is always the same, no matter at which step (modeling/enhancing) we are.
+        I.e. the transformation, if any, is always the same, no matter at which step (enhancing/predicting) we are."""
         if isinstance(component, str):
-            self._name = component[5:15]
-            self._serialized_component = component
+            # If this transformer is created by other transformer, we can take advantage of a previous serialization.
+            # This only works for PHolder because of its simpler uuid calculation!
+            self._name = json.loads(component)["name"]
+            self.config = json.loads(component)["config"]
+            self.serialized_component = component
         else:
             self._name = component.name
-            self._serialized_component = component.serialized
+            self.config = component.config  # TODO: put config in WithSerialization? in other mixin?
+            self.serialized_component = component.serialized
 
-        # ALERT: This class and Leaf depend on this exact dict items for fast access without complete deserialization!
         self._jsonable = {
             # 'cfuuid': component.cfuuid,
             # 'component_uuid': component.uuid,
-            'component': self._serialized_component,
-            'id': self.__class__.__name__ + '@' + self.__module__,
             'name': self.name,
+            'longname': self.longname,
             'path': self.path,
+            'config': self.config,
+            'transformer': self.__class__.__name__,
             'uuid': self.uuid,
         }
 
     @Property
     @lru_cache()
     def component(self):
-        return deserialize(self._serialized_component)
+        return deserialize(self.serialized_component)
 
     @Property
     @lru_cache()
@@ -61,20 +64,15 @@ class Transformer(WithSerialization, withPrinting, ABC):
 
     @Property
     @lru_cache()
-    def pholder(self):
+    def pholder(self) -> ph.PHolder:
         from pjdata.transformer.pholder import PHolder
         return PHolder(self.component)
-
-    @Property
-    @lru_cache()
-    def config(self):
-        return deserialize(self._serialized_component)
 
     @classmethod
     def materialize(cls, serialized):
         jsonable = json.loads(serialized)
 
-        class FakeComponent(WithSerialization):
+        class FakeComponent(ser.WithSerialization):
             path = jsonable['path']
             serialized = jsonable['component']
 

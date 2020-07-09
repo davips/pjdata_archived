@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from functools import lru_cache, cached_property
 from typing import Tuple, Optional, TYPE_CHECKING, Iterator, Union, Literal, Dict, List
 
@@ -14,8 +15,9 @@ import pjdata.aux.compression as com
 import pjdata.aux.uuid as u
 import pjdata.mixin.linalghelper as li
 import pjdata.transformer.transformer as tr
-from pjdata.aux.util import Property, getname
+from pjdata.aux.util import Property
 from pjdata.config import STORAGE_CONFIG
+import pjdata.history as h
 
 
 class Data(WithIdentification, withPrinting):
@@ -62,7 +64,7 @@ class Data(WithIdentification, withPrinting):
             self,
             uuid: u.UUID,
             uuids: Dict[str, u.UUID],
-            history: History,
+            history: h.History,
             failure: Optional[str],
             frozen: bool,
             hollow: bool,
@@ -282,7 +284,7 @@ class Data(WithIdentification, withPrinting):
     @Property
     @lru_cache()
     def history_str(self):
-        return ",".join(transf.uuid.id for transf in self.history)
+        return ",".join(json.loads(transf)["uuid"] for transf in self.history)
 
     @lru_cache()
     def field_dump(self, name):

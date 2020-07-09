@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-from itertools import repeat
-from typing import Union, Tuple, List, Callable, Type, Dict, Generator, Iterator, Optional
+from typing import Union, Tuple, List, Callable, Type, Dict, Generator, Iterator
 
 from numpy import ndarray  # type: ignore
 
 import pjdata.content.data as d
 import pjdata.content.specialdata as s
 
-Data = Union[Type[s.NoData], d.Data]    # TODO: <-- check for other types of Data?
+Data = Union[Type[s.NoData], d.Data]  # TODO: <-- check for other types of Data?
 # HINT: Multi containing a Sink can produce heterogeneous tuples
 DataTup = Tuple[Data, ...]
 DataOrTup = Union[Data, DataTup]
