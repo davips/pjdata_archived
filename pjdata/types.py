@@ -18,10 +18,7 @@ Acc = Union[List[Data], List[ndarray], float]  # Possible result types for cumul
 Result = Union[
     # Possible result types for _enhancer_func and _model_func.
     Data,
-    Dict[
-        str,
-        Union[None, Field, Iterator[Data], Generator[Data, None, Acc], Callable[[], Field]]
-    ]
+    Dict[str, Union[None, Field, Iterator[Data], Generator[Data, None, Acc], Callable[[], Field]]],
 ]
 
 # Type of function transform(). Can return NoData because of Sink.

@@ -72,10 +72,7 @@ def evolve(uuid: u.UUID, transformers: t.Iterable[tr.Transformer]) -> u.UUID:
 
 
 def evolve_id(
-        uuid: u.UUID,
-        uuids: Dict[str, u.UUID],
-        transformers: t.Iterable[tr.Transformer],
-        matrices: Dict[str, "t.Field"],
+    uuid: u.UUID, uuids: Dict[str, u.UUID], transformers: t.Iterable[tr.Transformer], matrices: Dict[str, "t.Field"],
 ) -> Tuple[u.UUID, Dict[str, u.UUID]]:
     """Return UUID/UUIDs after transformations."""
 
@@ -102,10 +99,7 @@ def evolve_id(
         #   a desvantagem é não ter o início da matriz compatível com o início em File,
         #   mas talvez possamos mudar File pra ficar igual.
 
-        muuid = uuids.get(
-            name,
-            uuid * u.UUID(bytes(name, 'latin1'))  # <-- fallback value
-        )
+        muuid = uuids.get(name, uuid * u.UUID(bytes(name, "latin1")))  # <-- fallback value
 
         # Transform UUID.
         muuid = evolve(muuid, transformers)

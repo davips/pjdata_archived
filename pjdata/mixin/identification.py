@@ -31,9 +31,7 @@ class WithIdentification(ABC):
         """
         if self._uuid is None:
             content = self._uuid_impl()
-            self._uuid = (
-                content if isinstance(content, UUID) else UUID(content.encode())
-            )
+            self._uuid = content if isinstance(content, UUID) else UUID(content.encode())
         return self._uuid
 
     @cached_property

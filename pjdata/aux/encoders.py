@@ -22,7 +22,7 @@ def md5_int(bytes_content: bytes):
     -------
         a big integer in [0; 2^128[
     """
-    return int.from_bytes(hashlib.md5(bytes_content).digest(), 'big')
+    return int.from_bytes(hashlib.md5(bytes_content).digest(), "big")
 
 
 def enc(number: int, alphabet: str = alph.letters800, padding: int = 14) -> str:
@@ -104,7 +104,7 @@ def enc(number: int, alphabet: str = alph.letters800, padding: int = 14) -> str:
         res.append(alphabet[rem])
         if number == 0:
             break
-    return ''.join(res)[::-1].rjust(padding, '0')
+    return "".join(res)[::-1].rjust(padding, "0")
 
 
 def dec(digits: str, lookup: Dict[str, int] = alph.lookup800) -> int:
@@ -134,6 +134,7 @@ def dec(digits: str, lookup: Dict[str, int] = alph.lookup800) -> int:
 def encrypt(msg: bytes, key: bytes) -> bytes:
     """AES 16 bytes encryption."""
     from Crypto.Cipher import AES
+
     cipher = AES.new(key, AES.MODE_ECB)
     return cipher.encrypt(msg)
 
@@ -141,21 +142,20 @@ def encrypt(msg: bytes, key: bytes) -> bytes:
 def decrypt(encrypted_msg: bytes, key: bytes) -> bytes:
     """AES 16 bytes decryption."""
     from Crypto.Cipher import AES
+
     cipher = AES.new(key, AES.MODE_ECB)
     return cipher.decrypt(encrypted_msg)
 
 
 def integers2bytes(lst: List[int]) -> bytes:
     """Each int becomes 4 bytes. max=4294967294"""
-    return b''.join([n.to_bytes(4, byteorder='big') for n in lst])
+    return b"".join([n.to_bytes(4, byteorder="big") for n in lst])
 
 
 def bytes2integers(bytes_content: bytes) -> List[int]:
     """Each 4 bytes become an int."""
     n = len(bytes_content)
-    return [
-        int.from_bytes(bytes_content[i:i + 4], 'big') for i in range(0, n, 4)
-    ]
+    return [int.from_bytes(bytes_content[i : i + 4], "big") for i in range(0, n, 4)]
 
 
 # Dirty and fast encoders, ....
@@ -175,7 +175,7 @@ def pmatrix2pretty(m: List[int], alphabet: str) -> str:  # =alphabet1224
     lst = [alphabet[m[i + 1] + side * m[i]] for i in range(0, side - 1, 2)]
     if side % 2 == 1:
         lst.append(alphabet[m[side - 1]])
-    return ''.join(lst)
+    return "".join(lst)
 
 
 def pretty2pmatrix(text: str, side: int, alphabet_dict: Dict[str, int]) -> List[int]:  # =alphabet1224dic

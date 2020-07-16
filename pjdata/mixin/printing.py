@@ -53,22 +53,10 @@ class withPrinting:
             jsonable = self.jsonable
 
         if not self.pretty_printing:
-            js_str = json.dumps(
-                jsonable,
-                cls=CustomJSONEncoder,
-                sort_keys=False,
-                indent=0,
-                ensure_ascii=False,
-            )
+            js_str = json.dumps(jsonable, cls=CustomJSONEncoder, sort_keys=False, indent=0, ensure_ascii=False,)
             return js_str.replace("\n", "")
 
-        js_str = json.dumps(
-            jsonable,
-            cls=CustomJSONEncoder,
-            sort_keys=False,
-            indent=4,
-            ensure_ascii=False,
-        )
+        js_str = json.dumps(jsonable, cls=CustomJSONEncoder, sort_keys=False, indent=4, ensure_ascii=False,)
         return js_str.replace("\n", "\n" + depth)
 
     __repr__ = __str__

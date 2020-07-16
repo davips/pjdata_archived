@@ -45,14 +45,14 @@ class Transformer(ser.WithSerialization, withPrinting, ABC):
         self._jsonable = {
             # 'cfuuid': component.cfuuid,
             # 'component_uuid': component.uuid,
-            'name': self.name,
-            'longname': self.longname,
-            'path': self.path,
-            'config': self.config,
-            'enhance': enhance,
+            "name": self.name,
+            "longname": self.longname,
+            "path": self.path,
+            "config": self.config,
+            "enhance": enhance,
             "model": model,
             # 'transformer': self.__class__.__name__,  # See 'ps' in docs.
-            'uuid': self.uuid,
+            "uuid": self.uuid,
         }
 
     @Property
@@ -69,6 +69,7 @@ class Transformer(ser.WithSerialization, withPrinting, ABC):
     @lru_cache()
     def pholder(self) -> ph.PHolder:
         from pjdata.transformer.pholder import PHolder
+
         return PHolder(self.component)
 
     @classmethod
@@ -76,14 +77,14 @@ class Transformer(ser.WithSerialization, withPrinting, ABC):
         jsonable = json.loads(serialized)
 
         class FakeComponent(ser.WithSerialization):
-            path = jsonable['path']
-            serialized = jsonable['component']
+            path = jsonable["path"]
+            serialized = jsonable["component"]
 
             def _name_impl(self):
-                return jsonable['name']
+                return jsonable["name"]
 
             def _uuid_impl(self):
-                return UUID(jsonable['component_uuid'])
+                return UUID(jsonable["component_uuid"])
 
             def _cfuuid_impl(self):
                 return jsonable
@@ -109,4 +110,4 @@ class Transformer(ser.WithSerialization, withPrinting, ABC):
         return self._name
 
     def _cfuuid_impl(self):
-        raise Exception('Non sense access!')
+        raise Exception("Non sense access!")

@@ -58,20 +58,21 @@ class Data(WithIdentification, withPrinting):
         Xt=['real', 'real', ['white', 'brown']]
         Yt=[['rabbit', 'mouse']]
     """
+
     _Xy = None
 
     def __init__(
-            self,
-            uuid: u.UUID,
-            uuids: Dict[str, u.UUID],
-            history: h.History,
-            failure: Optional[str],
-            frozen: bool,
-            hollow: bool,
-            stream: Optional[Iterator[Data]],
-            target: str = 's,r',  # Fields precedence when comparing which data is greater.
-            storage_info: str = None,
-            **matrices,
+        self,
+        uuid: u.UUID,
+        uuids: Dict[str, u.UUID],
+        history: h.History,
+        failure: Optional[str],
+        frozen: bool,
+        hollow: bool,
+        stream: Optional[Iterator[Data]],
+        target: str = "s,r",  # Fields precedence when comparing which data is greater.
+        storage_info: str = None,
+        **matrices,
     ):
         self._jsonable = [uuid, history, uuids]
         # TODO: Check if types (e.g. Mt) are compatible with values (e.g. M).
@@ -81,7 +82,7 @@ class Data(WithIdentification, withPrinting):
         #  3- dna property?
         #  4- task?
 
-        self.target = target.split(',')
+        self.target = target.split(",")
         self.history = history
         self._failure = failure
         self._frozen = frozen
@@ -92,13 +93,14 @@ class Data(WithIdentification, withPrinting):
         self.matrices = matrices
         self._uuid, self.uuids = uuid, uuids
 
-    def updated(self,
-                transformers: List[tr.Transformer],
-                failure: Optional[str] = 'keep',
-                frozen: Union[bool, Literal['keep']] = 'keep',
-                stream: Union[Iterator[Data], None, Literal["keep"]] = 'keep',
-                **fields
-                ) -> t.Data:
+    def updated(
+        self,
+        transformers: List[tr.Transformer],
+        failure: Optional[str] = "keep",
+        frozen: Union[bool, Literal["keep"]] = "keep",
+        stream: Union[Iterator[Data], None, Literal["keep"]] = "keep",
+        **fields,
+    ) -> t.Data:
         """Recreate an updated Data object.
 
         Parameters
@@ -120,11 +122,11 @@ class Data(WithIdentification, withPrinting):
         -------
         New Content object (it keeps references to the old one for performance).
         """
-        if failure == 'keep':
+        if failure == "keep":
             failure = self.failure
-        if frozen == 'keep':
+        if frozen == "keep":
             frozen = self.isfrozen
-        if stream == 'keep':
+        if stream == "keep":
             stream = self.stream
         matrices = self.matrices.copy()
         matrices.update(li.fields2matrices(fields))
@@ -134,9 +136,14 @@ class Data(WithIdentification, withPrinting):
         return Data(
             # TODO: optimize history, nesting/tree may be a better choice, to build upon the ref to the previous history
             history=self.history << transformers,
-            failure=failure, frozen=frozen, hollow=self.ishollow, stream=stream,
-            storage_info=self.storage_info, uuid=uuid, uuids=uuids,
-            **matrices
+            failure=failure,
+            frozen=frozen,
+            hollow=self.ishollow,
+            stream=stream,
+            storage_info=self.storage_info,
+            uuid=uuid,
+            uuids=uuids,
+            **matrices,
         )
 
     @Property
@@ -149,27 +156,31 @@ class Data(WithIdentification, withPrinting):
             1- pipeline fim-precoce (p. ex. após SVM.enhance)
             2- pipeline falho (após exceção)
          """
-        return Data(history=self.history,
-                    failure=self.failure,
-                    frozen=True,
-                    hollow=self.ishollow,
-                    stream=self.stream,
-                    storage_info=self.storage_info,
-                    uuid=self.uuid,
-                    uuids=self.uuids,
-                    **self.matrices)
+        return Data(
+            history=self.history,
+            failure=self.failure,
+            frozen=True,
+            hollow=self.ishollow,
+            stream=self.stream,
+            storage_info=self.storage_info,
+            uuid=self.uuid,
+            uuids=self.uuids,
+            **self.matrices,
+        )
 
     @cached_property
     def unfrozen(self):  # TODO: check if component Unfreeze is really needed
-        return Data(history=self.history,
-                    failure=self.failure,
-                    frozen=False,
-                    hollow=self.ishollow,
-                    stream=self.stream,
-                    storage_info=self.storage_info,
-                    uuid=self.uuid,
-                    uuids=self.uuids,
-                    **self.matrices)
+        return Data(
+            history=self.history,
+            failure=self.failure,
+            frozen=False,
+            hollow=self.ishollow,
+            stream=self.stream,
+            storage_info=self.storage_info,
+            uuid=self.uuid,
+            uuids=self.uuids,
+            **self.matrices,
+        )
 
     @lru_cache()
     def hollow(self: t.Data, transformer: tr.Transformer):
@@ -177,15 +188,17 @@ class Data(WithIdentification, withPrinting):
 
         ps. History is not touched, only uuid."""
         uuid, uuids = li.evolve_id(self.uuid, self.uuids, (transformer,), self.matrices)
-        return Data(history=self.history,
-                    failure=self.failure,
-                    frozen=self.isfrozen,
-                    hollow=True,
-                    stream=self.stream,
-                    storage_info=self.storage_info,
-                    uuid=uuid,
-                    uuids=uuids,
-                    **self.matrices)
+        return Data(
+            history=self.history,
+            failure=self.failure,
+            frozen=self.isfrozen,
+            hollow=True,
+            stream=self.stream,
+            storage_info=self.storage_info,
+            uuid=uuid,
+            uuids=uuids,
+            **self.matrices,
+        )
 
     @lru_cache()
     def field(self, name, block=False, context: WithIdentification = "undefined"):
@@ -234,7 +247,7 @@ class Data(WithIdentification, withPrinting):
         # Fetch previously deferred value?...
         if callable(m):
             if block:
-                raise NotImplementedError('Waiting of values not implemented yet!')
+                raise NotImplementedError("Waiting of values not implemented yet!")
             self.matrices[mname] = m = m()
 
         # Just return formatted according to capitalization...
@@ -265,7 +278,7 @@ class Data(WithIdentification, withPrinting):
         if self.uuid * transformer.uuid != output_data.uuid:
             print(4444444444444444, transformer)
             print(f"Expected UUID {self.uuid * transformer.uuid} doesn't match the output_data {output_data.uuid}")
-            print('TODO: Some components always perform enhancement: File, ...   A arquitetura está errada.')
+            print("TODO: Some components always perform enhancement: File, ...   A arquitetura está errada.")
             raise Exception
         return output_data
 
@@ -355,7 +368,7 @@ class Data(WithIdentification, withPrinting):
     def __lt__(self, other):
         """Amenity to ease pipeline result comparisons. 'A > B' means A is better than B."""
         for name in self._target:
-            return self.field(name) < other.field(name, context='comparison between Data objects')
+            return self.field(name) < other.field(name, context="comparison between Data objects")
         return Exception("Impossible to make comparisons. None of the target fields are available:", self.target)
 
     def _name_impl(self):
