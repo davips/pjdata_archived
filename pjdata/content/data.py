@@ -255,11 +255,19 @@ class Data(WithIdentification, withPrinting):
         # ps. It is preferable to have this method in Data instead of Transformer because of the different handling
         # depending on the type of content: Data, NoData.
         if self.isfrozen or self.failure:
-            return self.updated([transformer.pholder])  # TODO: check if Pholder here is what we want
-        result = transformer.rawtransform(self)
-        if isinstance(result, dict):
-            return self.updated(transformers=(transformer,), **result)
-        return result
+            output_data = self.updated([transformer.pholder])  # TODO: check if Pholder here is what we want
+        else:
+            output_data = transformer.rawtransform(self)
+            if isinstance(output_data, dict):
+                output_data = self.updated(transformers=[transformer], **output_data)
+
+        # TODO: In the future, remove this temporary check. It has a small cost, but is useful while in development:
+        if self.uuid * transformer.uuid != output_data.uuid:
+            print(4444444444444444, transformer)
+            print(f"Expected UUID {self.uuid * transformer.uuid} doesn't match the output_data {output_data.uuid}")
+            print('TODO: Some components always perform enhancement: File, ...   A arquitetura está errada.')
+            raise Exception
+        return output_data
 
     def Xy(self):
         if self._Xy is None:

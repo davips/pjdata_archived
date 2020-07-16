@@ -28,14 +28,20 @@ class Transformer(ser.WithSerialization, withPrinting, ABC):
         if isinstance(component, str):
             # If this transformer is created by other transformer, we can take advantage of a previous serialization.
             # This only works for PHolder because of its simpler uuid calculation!
-            self._name = json.loads(component)["name"]
-            self.config = json.loads(component)["config"]
+            dic = json.loads(component)
+            self._name = dic["name"]
+            self.path = dic["path"]
+            self.config = dic["config"]
             self.serialized_component = component
+            enhance, model = dic["enhance"], dic["model"]
         else:
             self._name = component.name
-            self.config = component.config  # TODO: put config in WithSerialization? in other mixin?
+            self.path = component.path
+            self.config = component.config  # TODO: put config/has* in WithSerialization? create a new mixin?
             self.serialized_component = component.serialized
+            enhance, model = component.hasenhancer, component.hasmodel
 
+        # WARNING: serialization of Transformer cannot be reverted! It is just a bunch of shortcuts to component.
         self._jsonable = {
             # 'cfuuid': component.cfuuid,
             # 'component_uuid': component.uuid,
@@ -43,7 +49,9 @@ class Transformer(ser.WithSerialization, withPrinting, ABC):
             'longname': self.longname,
             'path': self.path,
             'config': self.config,
-            'transformer': self.__class__.__name__,
+            'enhance': enhance,
+            "model": model,
+            # 'transformer': self.__class__.__name__,  # See 'ps' in docs.
             'uuid': self.uuid,
         }
 
@@ -56,11 +64,6 @@ class Transformer(ser.WithSerialization, withPrinting, ABC):
     @lru_cache()
     def longname(self):
         return self.__class__.__name__ + f"[{self.name}]"
-
-    @Property
-    @lru_cache()
-    def serialized(self):
-        return serialize(self)
 
     @Property
     @lru_cache()

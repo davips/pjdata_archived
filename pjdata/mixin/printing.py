@@ -45,9 +45,10 @@ class withPrinting:
         from pjdata.aux.customjsonencoder import CustomJSONEncoder
 
         if isinstance(self, Transformer):
-            # Taking transformer out of string for a better printing.
-            jsonable = self.jsonable.copy()
-            jsonable["component"] = json.loads(jsonable["component"])
+            # Taking component out of string for a better printing.
+            # jsonable = self.jsonable.copy()
+            # jsonable["component"] = json.loads(jsonable["component"])
+            jsonable = self.jsonable  # TODO: improve this
         else:
             jsonable = self.jsonable
 
