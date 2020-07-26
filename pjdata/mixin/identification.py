@@ -5,7 +5,7 @@ from functools import cached_property
 from pjdata.aux.uuid import UUID
 
 
-class WithIdentification(ABC):
+class withIdentification(ABC):
     """ Identifiable mixin. """
 
     @cached_property

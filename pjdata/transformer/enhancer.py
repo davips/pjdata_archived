@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Callable, TYPE_CHECKING, Union, Dict, Any
 
-from pjdata.mixin.serialization import WithSerialization
+from pjdata.mixin.serialization import withSerialization
 from pjdata.transformer.info import Info
 from pjdata.transformer.transformer import Transformer
 
@@ -16,13 +16,13 @@ from pjdata.aux.util import Property
 class Enhancer(Transformer):
     def __init__(
         self,
-        component: WithSerialization,
+        component: withSerialization,
         func: t.Transformation,
         info_func: Callable[[t.Data], Union[Info, Dict[str, Any]]],
     ):
         self._rawtransform = func
         self._info_func = info_func
-        self._uuid = component.cfuuid
+        self._uuid = component.cfuuid()
         super().__init__(component)
 
     @Property

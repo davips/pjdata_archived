@@ -17,10 +17,10 @@ from pjdata.aux.uuid import UUID
 from pjdata.mixin.printing import withPrinting
 
 
-class Transformer(ser.WithSerialization, withPrinting, ABC):
+class Transformer(ser.withSerialization, withPrinting, ABC):
     ispholder = False
 
-    def __init__(self, component: t.Union[str, ser.WithSerialization]):
+    def __init__(self, component: t.Union[str, ser.withSerialization]):
         """Base class for all transformers.
 
         ps. Assumes all components are symmetric. This class uses the same component details for both enhance and model.
@@ -76,7 +76,7 @@ class Transformer(ser.WithSerialization, withPrinting, ABC):
     def materialize(cls, serialized):
         jsonable = json.loads(serialized)
 
-        class FakeComponent(ser.WithSerialization):
+        class FakeComponent(ser.withSerialization):
             path = jsonable["path"]
             serialized = jsonable["component"]
 
@@ -86,7 +86,7 @@ class Transformer(ser.WithSerialization, withPrinting, ABC):
             def _uuid_impl(self):
                 return UUID(jsonable["component_uuid"])
 
-            def _cfuuid_impl(self):
+            def _cfuuid_impl(self, data=None):
                 return jsonable
 
         component = FakeComponent()
@@ -109,5 +109,5 @@ class Transformer(ser.WithSerialization, withPrinting, ABC):
     def _name_impl(self):
         return self._name
 
-    def _cfuuid_impl(self):
+    def _cfuuid_impl(self, data=None):
         raise Exception("Non sense access!")

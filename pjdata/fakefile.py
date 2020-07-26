@@ -4,10 +4,11 @@ from pjdata.aux.decorator import classproperty
 from pjdata.aux.serialization import serialize
 from pjdata.aux.util import Property
 from pjdata.aux.uuid import UUID
-from pjdata.mixin.serialization import WithSerialization
+from pjdata.content.specialdata import NoData
+from pjdata.mixin.serialization import withSerialization
 
 
-class FakeFile(WithSerialization):
+class FakeFile(withSerialization):
     path = "pjml.tool.data.flow.file"
 
     def __init__(self, filename, description, original_hashes):
@@ -28,7 +29,7 @@ class FakeFile(WithSerialization):
     def cfserialized(self):
         return serialize(self.info_for_transformer)
 
-    def _cfuuid_impl(self):
+    def _cfuuid_impl(self, data=None):
         return UUID(self.cfserialized.encode())
 
     def _name_impl(self):

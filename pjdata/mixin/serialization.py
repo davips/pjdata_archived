@@ -9,17 +9,16 @@ if typing.TYPE_CHECKING:
 
 from pjdata.aux.serialization import serialize
 from pjdata.aux.util import Property
-from pjdata.mixin.identification import WithIdentification
+from pjdata.mixin.identification import withIdentification
 
 
-class WithSerialization(WithIdentification, ABC):
+class withSerialization(withIdentification, ABC):
     path = None
 
-    @Property
     @lru_cache()
-    def cfuuid(self):
+    def cfuuid(self, data=None):
         """UUID excluding 'model' and 'enhance' flags. Identifies the *transformer*."""
-        return self._cfuuid_impl()
+        return self._cfuuid_impl(data)
 
     @Property
     @lru_cache()
@@ -28,5 +27,5 @@ class WithSerialization(WithIdentification, ABC):
         return serialize(self)
 
     @abstractmethod
-    def _cfuuid_impl(self):
+    def _cfuuid_impl(self, data=None):
         pass

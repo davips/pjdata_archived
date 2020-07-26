@@ -6,7 +6,7 @@ from typing import Tuple, Optional, TYPE_CHECKING, Iterator, Union, Literal, Dic
 
 from pjdata.aux.serialization import serialize, deserialize
 from pjdata.history import History
-from pjdata.mixin.identification import WithIdentification
+from pjdata.mixin.identification import withIdentification
 from pjdata.mixin.printing import withPrinting
 
 if TYPE_CHECKING:
@@ -20,7 +20,7 @@ from pjdata.config import STORAGE_CONFIG
 import pjdata.history as h
 
 
-class Data(WithIdentification, withPrinting):
+class Data(withIdentification, withPrinting):
     """Immutable lazy data for most machine learning scenarios.
 
     Parameters
@@ -62,17 +62,17 @@ class Data(WithIdentification, withPrinting):
     _Xy = None
 
     def __init__(
-        self,
-        uuid: u.UUID,
-        uuids: Dict[str, u.UUID],
-        history: h.History,
-        failure: Optional[str],
-        frozen: bool,
-        hollow: bool,
-        stream: Optional[Iterator[Data]],
-        target: str = "s,r",  # Fields precedence when comparing which data is greater.
-        storage_info: str = None,
-        **matrices,
+            self,
+            uuid: u.UUID,
+            uuids: Dict[str, u.UUID],
+            history: h.History,
+            failure: Optional[str],
+            frozen: bool,
+            hollow: bool,
+            stream: Optional[Iterator[Data]],
+            target: str = "s,r",  # Fields precedence when comparing which data is greater.
+            storage_info: str = None,
+            **matrices,
     ):
         self._jsonable = [uuid, history, uuids]
         # TODO: Check if types (e.g. Mt) are compatible with values (e.g. M).
@@ -94,12 +94,12 @@ class Data(WithIdentification, withPrinting):
         self._uuid, self.uuids = uuid, uuids
 
     def updated(
-        self,
-        transformers: List[tr.Transformer],
-        failure: Optional[str] = "keep",
-        frozen: Union[bool, Literal["keep"]] = "keep",
-        stream: Union[Iterator[Data], None, Literal["keep"]] = "keep",
-        **fields,
+            self,
+            transformers: List[tr.Transformer],
+            failure: Optional[str] = "keep",
+            frozen: Union[bool, Literal["keep"]] = "keep",
+            stream: Union[Iterator[Data], None, Literal["keep"]] = "keep",
+            **fields,
     ) -> t.Data:
         """Recreate an updated Data object.
 
@@ -201,7 +201,7 @@ class Data(WithIdentification, withPrinting):
         )
 
     @lru_cache()
-    def field(self, name, block=False, context: WithIdentification = "undefined"):
+    def field(self, name, block=False, context: withIdentification = "undefined"):
         """
         Safe access to a field, with a friendly error message.
 
@@ -265,19 +265,25 @@ class Data(WithIdentification, withPrinting):
         """Return this Data object transformed by func.
 
         Return itself if it is frozen or failed."""
-        # ps. It is preferable to have this method in Data instead of Transformer because of the different handling
-        # depending on the type of content: Data, NoData.
+        # REMINDER: It is preferable to have this method in Data instead of Transformer because of the different
+        # data handling depending on the type of content: Data, NoData.
         if self.isfrozen or self.failure:
-            output_data = self.updated([transformer.pholder])  # TODO: check if Pholder here is what we want
+            transformer = transformer.pholder
+            output_data = self.updated([transformer])  # TODO: check if Pholder here is what we want
+            # print(888777777777777777777777)
         else:
             output_data = transformer.rawtransform(self)
             if isinstance(output_data, dict):
                 output_data = self.updated(transformers=[transformer], **output_data)
+            # print(888777777777777777777777999999999999999999999999)
 
         # TODO: In the future, remove this temporary check. It has a small cost, but is useful while in development:
+        # print(type(transformer))
+        # print(type(output_data))
         if self.uuid * transformer.uuid != output_data.uuid:
             print(4444444444444444, transformer)
-            print(f"Expected UUID {self.uuid * transformer.uuid} doesn't match the output_data {output_data.uuid}")
+            print(f"Expected UUID {self.uuid} * {transformer.uuid} = {self.uuid * transformer.uuid} "
+                  f"doesn't match the output_data {output_data.uuid}")
             print("TODO: Some components always perform enhancement: File, ...   A arquitetura está errada.")
             raise Exception
         return output_data

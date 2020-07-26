@@ -14,7 +14,7 @@ from pjdata.content.data import Data
 from pjdata.content.specialdata import NoData
 from pjdata.fakefile import FakeFile
 from pjdata.history import History
-from pjdata.mixin.serialization import WithSerialization
+from pjdata.mixin.serialization import withSerialization
 from pjdata.transformer.enhancer import Enhancer
 
 

@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, List, Tuple, Optional, Iterator, TYPE_CHECKING, Literal, Union
 
+from pjdata.history import History
+
 if TYPE_CHECKING:
     import pjdata.types as t
 import pjdata.aux.uuid as u
@@ -27,8 +29,7 @@ class UUIDData(d.Data):
      The only available information is the UUID."""
 
     def __init__(self, uuid: u.UUID):
-        super().__init__(tuple(), failure=None, frozen=False, hollow=True)
-        self._uuid = uuid
+        super().__init__(uuid, {}, history=History([]), failure=None, frozen=False, hollow=True, stream=None)
 
     def _uuid_impl(self) -> u.UUID:
         return self._uuid
