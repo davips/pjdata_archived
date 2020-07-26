@@ -1,6 +1,6 @@
 """Setup for paje-data package."""
-import os
 import setuptools
+
 import pjdata
 
 NAME = "pjdata"
@@ -44,7 +44,8 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
 
 
 INSTALL_REQUIRES = [
-    'liac-arff', 'pandas', 'sklearn', 'pycryptodome', 'sortedcontainers'
+    'liac-arff', 'pandas', 'sklearn', 'pycryptodome', 'sortedcontainers',
+    'numpy'  # needed by mypy
 ]
 
 

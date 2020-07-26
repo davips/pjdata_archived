@@ -15,6 +15,7 @@ class PHolder(tr.Transformer):  # TODO: Find a better name? Skiper?
 
     Optionally a transformation 'idholder_func' can be passed, e.g. to freeze data.
     """
+
     ispholder = True
 
     def __init__(self, component: t.Union[str, ser.withSerialization], *args):

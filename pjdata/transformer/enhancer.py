@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import abstractmethod, ABC
 from functools import lru_cache
-from typing import Callable, TYPE_CHECKING, Union, Dict, Any
+from typing import TYPE_CHECKING
 
 from pjdata.mixin.serialization import withSerialization
 from pjdata.transformer.info import Info
@@ -11,12 +11,9 @@ from pjdata.transformer.transformer import Transformer
 if TYPE_CHECKING:
     import pjdata.types as t
 
-from pjdata.aux.util import Property
-
 
 class Enhancer(Transformer):
     def __init__(self, component: withSerialization, *args):
-        # info_func: Callable[[t.Data], Union[Info, Dict[str, Any]]]
         self._uuid = component.cfuuid()
         super().__init__(component)
 
@@ -35,4 +32,5 @@ class Enhancer(Transformer):
 
 class DSStep(Enhancer, ABC):
     """Data Science Step. Just a meaningful alias for Enhancer, but for non-transformers like File, Metric, etc."""
+
     pass

@@ -6,6 +6,7 @@ from numpy import ndarray  # type: ignore
 
 import pjdata.content.data as d
 import pjdata.content.specialdata as s
+from pjdata.mixin.identification import withIdentification
 
 Data = Union[Type[s.NoData], d.Data]  # TODO: <-- check for other types of Data?
 # HINT: Multi containing a Sink can produce heterogeneous tuples
@@ -23,3 +24,5 @@ Result = Union[
 
 # Type of function transform(). Can return NoData because of Sink.
 Transformation = Callable[[Data], Result]
+
+Context = Union[str, withIdentification]

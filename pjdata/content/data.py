@@ -2,10 +2,8 @@ from __future__ import annotations
 
 import json
 from functools import lru_cache, cached_property
-from typing import Tuple, Optional, TYPE_CHECKING, Iterator, Union, Literal, Dict, List
+from typing import Optional, TYPE_CHECKING, Iterator, Union, Literal, Dict, List
 
-from pjdata.aux.serialization import serialize, deserialize
-from pjdata.history import History
 from pjdata.mixin.identification import withIdentification
 from pjdata.mixin.printing import withPrinting
 
@@ -201,7 +199,7 @@ class Data(withIdentification, withPrinting):
         )
 
     @lru_cache()
-    def field(self, name, block=False, context: withIdentification = "undefined"):
+    def field(self, name, block=False, context: t.Context = "undefined"):
         """
         Safe access to a field, with a friendly error message.
 
@@ -229,7 +227,7 @@ class Data(withIdentification, withPrinting):
                 f"\n\nLast transformation:\n{self.history.last} ... \n"
                 f" Data object <{self}>...\n"
                 f"...last transformed by "
-                f"{self.history.last and getname(self.history.last)} does not "
+                f"{self.history.last and json.loads(self.history.last)} does not "
                 f"provide field {name} needed by {comp} .\n"
                 f"Available matrices: {list(self.matrices.keys())}"
             )
@@ -282,9 +280,17 @@ class Data(withIdentification, withPrinting):
         # print(type(output_data))
         if self.uuid * transformer.uuid != output_data.uuid:
             print(4444444444444444, transformer)
-            print(f"Expected UUID {self.uuid} * {transformer.uuid} = {self.uuid * transformer.uuid} "
-                  f"doesn't match the output_data {output_data.uuid}")
+            print(
+                f"Expected UUID {self.uuid} * {transformer.uuid} = {self.uuid * transformer.uuid} "
+                f"doesn't match the output_data {output_data.uuid}"
+            )
             print("TODO: Some components always perform enhancement: File, ...   A arquitetura está errada.")
+            print("Histories:")
+            print(self.history ^ "longname", self.history ^ "uuid")
+            print(output_data.history ^ "longname", output_data.history ^ "uuid")
+            print(u.UUID("0èɯҺӋҺӭЎϳńąъµƾ") * u.UUID("ÈOըЭħwßјΞȪȎӝƊǩ"))
+            print(transformer.longname)
+            print()
             raise Exception
         return output_data
 
@@ -338,7 +344,7 @@ class Data(withIdentification, withPrinting):
             raise Exception(f"There is no storage set to fetch {id})!")
         return STORAGE_CONFIG["storages"][self.storage_info].fetch_matrix(id)
 
-    def _remove_unsafe_prefix(self, item, component="undefined"):
+    def _remove_unsafe_prefix(self, item, component: withIdentification = "undefined"):
         """Handle unsafe (i.e. frozen) fields."""
         if item.startswith("unsafe"):
             # User knows what they are doing.
@@ -366,7 +372,7 @@ class Data(withIdentification, withPrinting):
         # if item == "Xy":
         #     return self.Xy
         if 0 < (len(item) < 3 or item.startswith("unsafe")):
-            return self.field(item, "[direct access through shortcut]")
+            return self.field(item, context="[direct access through shortcut]")
 
         # print('getting attribute...', item)
         return super().__getattribute__(item)
