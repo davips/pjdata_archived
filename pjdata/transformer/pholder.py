@@ -17,13 +17,12 @@ class PHolder(tr.Transformer):  # TODO: Find a better name? Skiper?
     """
     ispholder = True
 
-    def __init__(self, component: t.Union[str, ser.withSerialization], idholder_func: t.Transformation = None):
+    def __init__(self, component: t.Union[str, ser.withSerialization], *args):
         self._uuid = u.UUID.identity
-        self._rawtransform = (lambda _: {}) if idholder_func is None else idholder_func
         super().__init__(component)
 
-    def rawtransform(self, content: t.Data) -> t.Result:
-        return self._rawtransform(content)
+    def _transform_impl(self, data: t.Data) -> t.Result:
+        return {}
 
     def _uuid_impl(self):
         return self._uuid

@@ -100,7 +100,7 @@ class Transformer(ser.withSerialization, withPrinting, ABC):
         return content.transformedby(self)
 
     @abstractmethod
-    def rawtransform(self, content: t.Data) -> t.Result:
+    def _transform_impl(self, data: t.Data) -> t.Result:
         pass
 
     def _jsonable_impl(self):

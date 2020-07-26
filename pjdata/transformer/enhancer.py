@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from abc import abstractmethod
 from functools import lru_cache
 from typing import Callable, TYPE_CHECKING, Union, Dict, Any
 
@@ -14,25 +15,20 @@ from pjdata.aux.util import Property
 
 
 class Enhancer(Transformer):
-    def __init__(
-        self,
-        component: withSerialization,
-        func: t.Transformation,
-        info_func: Callable[[t.Data], Union[Info, Dict[str, Any]]],
-    ):
-        self._rawtransform = func
-        self._info_func = info_func
+    def __init__(self, component: withSerialization, *args):
+        # info_func: Callable[[t.Data], Union[Info, Dict[str, Any]]]
         self._uuid = component.cfuuid()
         super().__init__(component)
 
     @Property
     @lru_cache()
     def info(self, data: t.Data) -> Info:
-        info = self._info_func(data)
+        info = self._info_impl(data)
         return info if isinstance(info, Info) else Info(items=info)
 
-    def rawtransform(self, content: t.Data) -> t.Result:
-        return self._rawtransform(content)
+    @abstractmethod
+    def _info_impl(self, data):
+        pass
 
     def _uuid_impl(self):
         return self._uuid
