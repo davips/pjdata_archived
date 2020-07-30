@@ -91,6 +91,9 @@ class Data(withIdentification, withPrinting):
         self.matrices = matrices
         self._uuid, self.uuids = uuid, uuids
 
+    def _jsonable_impl(self):
+        return self._jsonable
+
     def updated(
             self,
             transformers: List[tr.Transformer],
@@ -131,6 +134,7 @@ class Data(withIdentification, withPrinting):
 
         uuid, uuids = li.evolve_id(self.uuid, self.uuids, transformers, matrices)
 
+        # noinspection Mypy
         return Data(
             # TODO: optimize history, nesting/tree may be a better choice, to build upon the ref to the previous history
             history=self.history << transformers,
@@ -279,16 +283,16 @@ class Data(withIdentification, withPrinting):
         # print(type(transformer))
         # print(type(output_data))
         if self.uuid * transformer.uuid != output_data.uuid:
-            print(4444444444444444, transformer)
+            print("Error:", 4444444444444444, transformer)
             print(
                 f"Expected UUID {self.uuid} * {transformer.uuid} = {self.uuid * transformer.uuid} "
                 f"doesn't match the output_data {output_data.uuid}"
             )
-            print("TODO: Some components always perform enhancement: File, ...   A arquitetura está errada.")
             print("Histories:")
             print(self.history ^ "longname", self.history ^ "uuid")
             print(output_data.history ^ "longname", output_data.history ^ "uuid")
-            print(u.UUID("0èɯҺӋҺӭЎϳńąъµƾ") * u.UUID("ÈOըЭħwßјΞȪȎӝƊǩ"))
+            # print(u.UUID("ýϔȚźцŠлʉWÚΉїͷó") * u.UUID("4ʊĘÓĹmրӐƉοÝѕȷg"))
+            # print(u.UUID("ýϔȚźцŠлʉWÚΉїͷó") * u.UUID("1ϺϽΖМȅÏОʌŨӬѓȤӟ"))
             print(transformer.longname)
             print()
             raise Exception
