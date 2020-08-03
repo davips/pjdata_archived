@@ -18,6 +18,11 @@ from pjdata.config import STORAGE_CONFIG
 import pjdata.history as h
 
 
+def new():
+    # TODO: create Data from matrices
+    raise NotImplementedError
+
+
 class Data(withIdentification, withPrinting):
     """Immutable lazy data for most machine learning scenarios.
 
@@ -185,13 +190,16 @@ class Data(withIdentification, withPrinting):
         )
 
     @lru_cache()
-    def hollow(self: t.Data, transformer: tr.Transformer):
+    def hollow(self: t.Data, transformer: tr.Transformer = None):
         """Create a temporary hollow Data object (only Persistence can fill it).
 
         ps. History is not touched, only uuid."""
-        uuid, uuids = li.evolve_id(self.uuid, self.uuids, (transformer,), self.matrices)
+        if transformer is None:
+            uuid, uuids = self.uuid, self.uuids
+        else:
+            uuid, uuids = li.evolve_id(self.uuid, self.uuids, (transformer,), self.matrices)
         return Data(
-            history=self.history,
+            history=self.history,  # TODO: check if history must be updated as well.
             failure=self.failure,
             frozen=self.isfrozen,
             hollow=True,
