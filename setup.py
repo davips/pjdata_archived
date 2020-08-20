@@ -44,7 +44,7 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
 
 INSTALL_REQUIRES = [
     'liac-arff', 'pandas', 'sklearn', 'pycryptodome', 'sortedcontainers',
-    'numpy', 'compose'  # needed by mypy
+    'numpy'  # needed by mypy
 ]
 
 
@@ -65,6 +65,7 @@ EXTRAS_REQUIRE = {
     ]
 }
 
+SETUP_REQUIRES = ['flake8', 'autopep8', 'wheel', 'compose']
 
 setuptools.setup(
     name=NAME,
@@ -81,6 +82,7 @@ setuptools.setup(
     classifiers=CLASSIFIERS,
     install_requires=INSTALL_REQUIRES,
     extras_require=EXTRAS_REQUIRE,
+    setup_requires=SETUP_REQUIRES    
 )
 
 package_dir = {'': 'pjdata'}  # For IDEs like Intellij to recognize the package.
