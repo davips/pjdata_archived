@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Tuple, Optional, Iterator, TYPE_CHECKING, Literal, Union
+from typing import Dict, List, Tuple, Iterator, TYPE_CHECKING, Literal, Union
 
 from pjdata.history import History
 
@@ -35,7 +35,8 @@ class UUIDData(d.Data):
         return self._uuid
 
     def __getattr__(self, item):
-        raise Exception("This a UUIDData object. It has no fields!")
+        if item not in ["id"]:
+            raise Exception("This a UUIDData object. It has no fields!")
 
     # else:
     #     return self.__getattribute__(item)
@@ -73,10 +74,10 @@ class NoData(type):
 
     @staticmethod
     def updated(
-        transformers: Tuple[tr.Transformer, ...],
-        failure: Union[str, t.Status] = "keep",
-        stream: Union[Iterator[t.Data], None, Literal["keep"]] = "keep",
-        **fields
+            transformers: Tuple[tr.Transformer, ...],
+            failure: Union[str, t.Status] = "keep",
+            stream: Union[Iterator[t.Data], None, Literal["keep"]] = "keep",
+            **fields
     ) -> t.Data:
         # noinspection PyCallByClass
         return d.Data.updated(NoData, transformers, failure, stream, **fields)

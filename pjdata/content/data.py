@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import json
+import traceback
 from functools import lru_cache, cached_property
 from typing import Optional, TYPE_CHECKING, Iterator, Union, Literal, Dict, List
+
+import arff
 
 from pjdata.mixin.identification import withIdentification
 from pjdata.mixin.printing import withPrinting
@@ -16,6 +19,7 @@ import pjdata.transformer.transformer as tr
 from pjdata.aux.util import Property
 from pjdata.config import STORAGE_CONFIG
 import pjdata.history as h
+import numpy as np
 
 
 def new():
@@ -408,6 +412,28 @@ class Data(withIdentification, withPrinting):
 
     def __hash__(self) -> int:
         return hash(self.uuid)
+
+    @cached_property
+    def arff(self, relation, description):
+        from pjdata.data_creation import translate_type
+        Xt = [translate_type(typ) for typ in self.Xt]
+        Yt = [translate_type(typ) for typ in self.Yt]
+        dic = {
+            "relation": relation,
+            "description": description,
+            "attributes": list(zip(self.Xd, Xt)) + list(zip(self.Yd, Yt)),
+            "data": np.column_stack((self.X, self.Y)),
+        }
+        try:
+            return arff.dumps(dic)
+        except:
+            traceback.print_exc()
+            print("Problems creating ARFF", self.filename)
+            print("Types:", Xt, Yt)
+            print("Sample:", self.X[0], self.Y[0])
+            print("Expected sizes:", len(Xt), "+", len(Yt))
+            print("Real sizes:", len(self.X[0]), "+", len(self.Y[0].shape))
+            exit(0)
 
 
 class MissingField(Exception):
