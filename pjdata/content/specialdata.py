@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Dict, List, Tuple, Iterator, TYPE_CHECKING, Literal, Union
 
 from pjdata.history import History
@@ -10,17 +9,6 @@ if TYPE_CHECKING:
 import pjdata.aux.uuid as u
 import pjdata.content.data as d
 import pjdata.transformer as tr
-
-
-@dataclass(frozen=True)
-class TemporaryData:
-    """Temporary class to exist between a transformation and the supply of the responsible transformer."""
-
-    data: t.Data
-
-    def history_updated(self, transformers: Tuple[tr.Transformer, ...]):
-        """Complete Data object started by 'updated_()'."""
-        return self.data.updated(transformers=transformers)
 
 
 class UUIDData(d.Data):

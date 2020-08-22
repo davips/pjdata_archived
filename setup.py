@@ -1,12 +1,11 @@
 """Setup for paje-data package."""
-import pjdata
 import setuptools
+
+import pjdata
 
 NAME = "pjdata"
 
-
 VERSION = pjdata.__version__
-
 
 AUTHOR = 'Davi Pereira dos Santos and Edesio Alcobaça'
 
@@ -44,7 +43,7 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
 
 INSTALL_REQUIRES = [
     'liac-arff', 'pandas', 'sklearn', 'pycryptodome', 'sortedcontainers',
-    'numpy'  # needed by mypy
+    'compose', 'lz4', 'zstandard', 'numpy'  # needed by mypy
 ]
 
 
