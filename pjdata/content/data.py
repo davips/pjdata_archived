@@ -413,14 +413,13 @@ class Data(withIdentification, withPrinting):
     def __hash__(self) -> int:
         return hash(self.uuid)
 
-    @cached_property
+    @lru_cache
     def arff(self, relation, description):
-        from pjdata.data_creation import translate_type
-        Xt = [translate_type(typ) for typ in self.Xt]
-        Yt = [translate_type(typ) for typ in self.Yt]
+        Xt = [untranslate_type(typ) for typ in self.Xt]
+        Yt = [untranslate_type(typ) for typ in self.Yt]
         dic = {
-            "relation": relation,
             "description": description,
+            "relation": relation,
             "attributes": list(zip(self.Xd, Xt)) + list(zip(self.Yd, Yt)),
             "data": np.column_stack((self.X, self.Y)),
         }
@@ -438,3 +437,12 @@ class Data(withIdentification, withPrinting):
 
 class MissingField(Exception):
     pass
+
+
+def untranslate_type(name):
+    if isinstance(name, list):
+        return name
+    if name in ["real", "int"]:
+        return "NUMERIC"
+    else:
+        raise Exception("Unknown type:", name)

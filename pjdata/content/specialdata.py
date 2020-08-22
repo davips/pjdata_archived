@@ -16,7 +16,9 @@ class UUIDData(d.Data):
 
      The only available information is the UUID."""
 
-    def __init__(self, uuid: u.UUID):
+    def __init__(self, uuid: t.Union[u.UUID, str]):
+        if isinstance(uuid, str):
+            uuid = u.UUID(uuid)
         super().__init__(uuid, {}, history=History([]), failure=None, frozen=False, hollow=True, stream=None)
 
     def _uuid_impl(self) -> u.UUID:
