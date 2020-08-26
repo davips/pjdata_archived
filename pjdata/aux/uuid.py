@@ -5,6 +5,7 @@ from math import factorial
 from typing import Union, List
 
 import pjdata.aux.alphabets as alph
+from pjdata.aux.avatar import avatar
 from pjdata.aux.classproperty import ClassProperty
 from pjdata.aux.encoders import enc, dec
 from pjdata.aux.linalg import int2pmat, pmat_transpose, pmat_mult, pmat2int, print_binmatrix
@@ -172,6 +173,9 @@ class UUID:
         if self._isfirst is None:
             self._isfirst = self.m == self.first_matrix
         return self._isfirst
+
+    def generate_avatar(self, file="/tmp/text.jpg"):
+        avatar(self, file)
 
     def __mul__(self, other: UUID) -> UUID:
         """Flexible merge/unmerge with another UUID.

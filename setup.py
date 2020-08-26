@@ -43,7 +43,7 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
 
 INSTALL_REQUIRES = [
     'liac-arff', 'pandas', 'sklearn', 'pycryptodome', 'sortedcontainers',
-    'compose', 'lz4', 'zstandard', 'numpy'  # needed by mypy
+    'compose', 'lz4', 'zstandard', "Pillow", 'numpy'  # needed by mypy
 ]
 
 
