@@ -9,7 +9,7 @@ font_size = 48
 
 def move(fc, aft):
     r, g, b = fc
-    inc = 30
+    inc = 15
     dr = (r + inc) % 225 if r < round(inc + (225 * ord(aft[0]) / 800)) else (r + 225 - inc) % 225
     dg = (g + inc) % 225 if g < round(inc + (225 * ord(aft[1]) / 800)) else (r + 225 - inc) % 225
     db = (b + inc) % 225 if b < round(inc + (225 * ord(aft[2]) / 800)) else (r + 225 - inc) % 225
