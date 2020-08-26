@@ -90,7 +90,7 @@ class Transformer(ser.withSerialization, withPrinting, ABC):
                 return jsonable
 
         component = FakeComponent()
-        return cls(component)  # TODO: how to materialize func?
+        return cls(component)
 
     def transform(self, content: t.DataOrTup, exit_on_error=True) -> t.DataOrTup:
         if isinstance(content, tuple):
