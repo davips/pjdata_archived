@@ -82,7 +82,7 @@ def evolve_id(
         # If it is a new matrix, assign a UUID for its birth.
         # TODO:
         #  Perform benchmark to evaluate if using pack(X) as identity here is too
-        #  slow. Having a start identical to that of data_creation seems
+        #  slow. Having a start identical to that of creation.py seems
         #  good, but it can be slow for big matrices created after transf.
         #  However, it is not usual. E.g. Xbig -> Ubig.
         #  It is needed to avoid different UUIDs for the same content.
