@@ -333,7 +333,7 @@ class Data(withIdentification, withPrinting):
     @Property
     @lru_cache()
     def history_str(self):
-        return ",".join(json.loads(transf)["uuid"] for transf in self.history)
+        return ",".join(transf.id for transf in self.history)
 
     @lru_cache()
     def field_dump(self, name):
