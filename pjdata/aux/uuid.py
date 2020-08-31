@@ -174,7 +174,10 @@ class UUID:
             self._isfirst = self.m == self.first_matrix
         return self._isfirst
 
-    def generate_avatar(self, file="/tmp/text.jpg"):
+    def generate_avatar(self, file="/tmp/avatar_{id}.jpg"):
+        """Colorful Visual representation of UUID."""
+        if "{id}" in file:
+            file = file.replace("{id}", self.id)
         avatar(self, file)
 
     def __mul__(self, other: UUID) -> UUID:
