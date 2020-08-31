@@ -67,7 +67,7 @@ class History(withPrinting):
     def clean(self):
         for transformer in self:
             if not transformer.ispholder:
-                yield transformer
+                yield transformer.name
 
     def __xor__(self, attrname):
         return list(map(lambda x: x.__dict__[attrname], self.traverse(self)))  # TODO: memoize json?

@@ -81,7 +81,7 @@ class Data(withIdentification, withPrinting):
             storage_info: str = None,
             **matrices,
     ):
-        self._jsonable = [uuid, history, uuids]
+        self._jsonable = {"uuid": uuid, "history": history, "uuids": uuids}
         # TODO: Check if types (e.g. Mt) are compatible with values (e.g. M).
         # TODO:
         #  1- 'name' and 'desc'
