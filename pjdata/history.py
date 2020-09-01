@@ -64,6 +64,7 @@ class History(withPrinting):
 
     @Property
     def pickable(self):
+        """Convert history to a serializable list."""
         return [transformer.jsonable for transformer in self]
 
     @Property
