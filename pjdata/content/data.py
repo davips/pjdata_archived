@@ -79,6 +79,7 @@ class Data(withIdentification, withPrinting):
             stream: Optional[Iterator[Data]],
             target: str = "s,r",  # Fields precedence when comparing which data is greater.
             storage_info: str = None,
+            historystr=None,
             **matrices,
     ):
         self._jsonable = {"uuid": uuid, "history": history, "uuids": uuids}
@@ -99,6 +100,7 @@ class Data(withIdentification, withPrinting):
         self.storage_info = storage_info
         self.matrices = matrices
         self._uuid, self.uuids = uuid, uuids
+        self.historystr = historystr
 
     def _jsonable_impl(self):
         return self._jsonable
@@ -197,13 +199,13 @@ class Data(withIdentification, withPrinting):
     def hollow(self: t.Data, transformer: tr.Transformer = None):
         """Create a temporary hollow Data object (only Persistence can fill it).
 
-        ps. History is not touched, only uuid."""
+        ps. History is transferred to historystr, uuid is changed."""
         if transformer is None:
             uuid, uuids = self.uuid, self.uuids
         else:
             uuid, uuids = li.evolve_id(self.uuid, self.uuids, (transformer,), self.matrices)
         return Data(
-            history=self.history,  # TODO: check if history must be updated as well.
+            history=None,  # TODO: check if history must be updated as well.
             failure=self.failure,
             frozen=self.isfrozen,
             hollow=True,
@@ -211,6 +213,24 @@ class Data(withIdentification, withPrinting):
             storage_info=self.storage_info,
             uuid=uuid,
             uuids=uuids,
+            historystr=self.history.pickable,
+            **self.matrices,
+        )
+
+    @property
+    @lru_cache()
+    def pickable(self: t.Data):
+        """Create a pickable Data object (i.e. without History)."""
+        return Data(
+            history=None,
+            failure=self.failure,
+            frozen=self.isfrozen,
+            hollow=self.ishollow,
+            stream=self.stream,
+            storage_info=self.storage_info,
+            uuid=self.uuid,
+            uuids=self.uuids,
+            historystr=self.history.pickable,
             **self.matrices,
         )
 

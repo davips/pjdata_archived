@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from functools import lru_cache
 from typing import List, Union
 
@@ -62,6 +61,10 @@ class History(withPrinting):
 
     def __iter__(self):
         yield from self.traverse(self)
+
+    @Property
+    def pickable(self):
+        return [transformer.jsonable for transformer in self]
 
     @Property
     def clean(self):

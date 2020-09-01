@@ -38,7 +38,7 @@ class NoData(type):
     uuid = u.UUID()
     id = uuid.id
     uuids: dict = {}
-    history: List[tr.Transformer] = []
+    history: History = History([])
     stream = None
     matrices: Dict[str, t.Field] = {}
     failure: str = None
