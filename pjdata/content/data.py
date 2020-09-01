@@ -148,6 +148,8 @@ class Data(withIdentification, withPrinting):
         uuid, uuids = li.evolve_id(self.uuid, self.uuids, transformers, matrices)
 
         # noinspection Mypy
+        if self.history is None:
+            self.history = h.History([])
         return Data(
             # TODO: optimize history, nesting/tree may be a better choice, to build upon the ref to the previous history
             history=self.history << transformers,
