@@ -225,8 +225,10 @@ class Data(withIdentification, withPrinting):
     @lru_cache()
     def pickable(self: t.Data):
         """Create a pickable Data object (i.e. without History)."""
+        if self.history is None:
+            self.history = h.History([])
         return Data(
-            history=None,
+            history=h.History([]), #TODO: remove IFs history is None?
             failure=self.failure,
             frozen=self.isfrozen,
             hollow=self.ishollow,
