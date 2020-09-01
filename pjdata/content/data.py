@@ -82,6 +82,8 @@ class Data(withIdentification, withPrinting):
             historystr=None,
             **matrices,
     ):
+        if historystr is None:
+            historystr = []
         self._jsonable = {"uuid": uuid, "history": history, "uuids": uuids}
         # TODO: Check if types (e.g. Mt) are compatible with values (e.g. M).
         # TODO:
@@ -205,7 +207,7 @@ class Data(withIdentification, withPrinting):
         else:
             uuid, uuids = li.evolve_id(self.uuid, self.uuids, (transformer,), self.matrices)
         return Data(
-            history=None,  # TODO: check if history must be updated as well.
+            history=h.History([]),  # TODO: check if history must be updated as well.
             failure=self.failure,
             frozen=self.isfrozen,
             hollow=True,
