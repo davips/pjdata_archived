@@ -148,8 +148,6 @@ class Data(withIdentification, withPrinting):
         uuid, uuids = li.evolve_id(self.uuid, self.uuids, transformers, matrices)
 
         # noinspection Mypy
-        if self.history is None:
-            self.history = h.History([])
         return Data(
             # TODO: optimize history, nesting/tree may be a better choice, to build upon the ref to the previous history
             history=self.history << transformers,
@@ -209,7 +207,7 @@ class Data(withIdentification, withPrinting):
         else:
             uuid, uuids = li.evolve_id(self.uuid, self.uuids, (transformer,), self.matrices)
         return Data(
-            history=h.History([]),  # TODO: check if history must be updated as well.
+            history=self.history,   #h.History([]),  # TODO: check if history must be updated as well.
             failure=self.failure,
             frozen=self.isfrozen,
             hollow=True,
@@ -225,10 +223,8 @@ class Data(withIdentification, withPrinting):
     @lru_cache()
     def pickable(self: t.Data):
         """Create a pickable Data object (i.e. without History)."""
-        if self.history is None:
-            self.history = h.History([])
         return Data(
-            history=h.History([]), #TODO: remove IFs history is None?
+            history=self.history,  #h.History([]), #TODO: remove IFs history is None?
             failure=self.failure,
             frozen=self.isfrozen,
             hollow=self.ishollow,
@@ -268,9 +264,7 @@ class Data(withIdentification, withPrinting):
             raise MissingField(
                 f"\n\nLast transformation:\n{self.history.last} ... \n"
                 f" Data object <{self}>...\n"
-                f"...last transformed by "
-                f"{self.history.last and json.loads(self.history.last)} does not "
-                f"provide field {name} needed by {comp} .\n"
+                f"...last transformed by {self.history.last} does not provide field {name} needed by {comp} .\n"
                 f"Available matrices: {list(self.matrices.keys())}"
             )
 
