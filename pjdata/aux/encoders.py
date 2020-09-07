@@ -84,6 +84,30 @@ def enc(number: int, alphabet: str = alph.letters800, padding: int = 14) -> str:
     typeable and double-clickable (63)
 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz
 
+14:
+ÂɕÃѓνʓʅŶTČϒËzЂ
+
+23:
+D2eEFG4HIj1NOP764Qstya8
+
+In [7]: math.log(factorial(35), 62)
+Out[7]: 22.32449128323706
+
+14: ÂɕÃѓνʓʅŶTČϒËzЂ
+
+     ÂɕÃѓ
+    νʓʅŶT
+    ČϒËzЂ
+
+
+23: D2eEFG4HIj1NOP764Qstya8
+
+     D2eEF
+    G4HIj1
+    NOP764
+    Qstya8
+
+
     Parameters
     ----------
     number
