@@ -71,7 +71,7 @@ class History(withPrinting):
     def clean(self):
         """Clean version of history. Only the names (of real transformations)."""
         for transformer in self:
-            if not transformer.ispholder:
+            if not transformer.isnoop:
                 yield transformer.name
 
     def __xor__(self, attrname):

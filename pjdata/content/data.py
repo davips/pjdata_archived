@@ -80,6 +80,7 @@ class Data(withIdentification, withPrinting):
             target: str = "s,r",  # Fields precedence when comparing which data is greater.
             storage_info: str = None,
             historystr=None,
+            trdata=None,
             **matrices,
     ):
         if historystr is None:
@@ -103,18 +104,19 @@ class Data(withIdentification, withPrinting):
         self.matrices = matrices
         self._uuid, self.uuids = uuid, uuids
         self.historystr = historystr
+        self.trdata = trdata
 
     def _jsonable_impl(self):
         return self._jsonable
 
-    def updated(
+    def replace(
             self,
             transformers: List[tr.Transformer],
             failure: Optional[str] = "keep",
             frozen: Union[bool, Literal["keep"]] = "keep",
             stream: Union[Iterator[Data], None, Literal["keep"]] = "keep",
             **fields,
-    ) -> t.Data:
+    ):
         """Recreate an updated Data object.
 
         Parameters
@@ -136,6 +138,8 @@ class Data(withIdentification, withPrinting):
         -------
         New Content object (it keeps references to the old one for performance).
         """
+        if not isinstance(transformers, list):
+            transformers = [transformers]
         if failure == "keep":
             failure = self.failure
         if frozen == "keep":
@@ -228,7 +232,7 @@ class Data(withIdentification, withPrinting):
         if self.history is None:
             self.history = h.History([])
         return Data(
-            history=h.History([]), #TODO: remove IFs history is None?
+            history=h.History([]),  # TODO: remove IFs history is None?
             failure=self.failure,
             frozen=self.isfrozen,
             hollow=self.ishollow,
@@ -309,12 +313,12 @@ class Data(withIdentification, withPrinting):
         # data handling depending on the type of content: Data, NoData.
         if self.isfrozen or self.failure:
             transformer = transformer.pholder
-            output_data = self.updated([transformer])  # TODO: check if Pholder here is what we want
+            output_data = self.replace([transformer])  # TODO: check if Pholder here is what we want
             # print(888777777777777777777777)
         else:
             output_data = transformer._transform_impl(self)
             if isinstance(output_data, dict):
-                output_data = self.updated(transformers=[transformer], **output_data)
+                output_data = self.replace(transformers=[transformer], **output_data)
             # print(888777777777777777777777999999999999999999999999)
 
         # TODO: In the future, remove this temporary check. It has a small cost, but is useful while in development:
@@ -336,6 +340,7 @@ class Data(withIdentification, withPrinting):
             raise Exception
         return output_data
 
+    @cached_property
     def Xy(self):
         if self._Xy is None:
             self._Xy = self.field("X"), self.field("y")
