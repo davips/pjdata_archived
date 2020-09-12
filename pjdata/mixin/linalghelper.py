@@ -65,15 +65,13 @@ def fields2matrices(fields: Dict[str, "t.Field"]) -> Dict[str, "t.Field"]:
     return matrices
 
 
-def evolve(uuid: u.UUID, transformers: t.Iterable[tr.Transformer]) -> u.UUID:
+def evolve(uuid, transformers, truuid):
     for transformer in transformers:
-        uuid *= transformer.uuid
+        uuid *= transformer.uuid(truuid)  # TODO: toda operaçao de uuid transformadora deve chamar com trdata
     return uuid
 
 
-def evolve_id(
-    uuid: u.UUID, uuids: Dict[str, u.UUID], transformers: t.Iterable[tr.Transformer], matrices: Dict[str, "t.Field"],
-) -> Tuple[u.UUID, Dict[str, u.UUID]]:
+def evolve_id(uuid, uuids, transformers, matrices, truuid):
     """Return UUID/UUIDs after transformations."""
 
     # Update matrix UUIDs.
@@ -102,10 +100,10 @@ def evolve_id(
         muuid = uuids.get(name, uuid * u.UUID(bytes(name, "latin1")))  # <-- fallback value
 
         # Transform UUID.
-        muuid = evolve(muuid, transformers)
+        muuid = evolve(muuid, transformers, truuid)
         uuids_[name] = muuid
 
     # Update UUID.
-    uuid = evolve(uuid, transformers)
+    uuid = evolve(uuid, transformers, truuid)
 
     return uuid, uuids_

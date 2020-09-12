@@ -109,14 +109,7 @@ class Data(withIdentification, withPrinting):
     def _jsonable_impl(self):
         return self._jsonable
 
-    def replace(
-            self,
-            transformers: List[tr.Transformer],
-            failure: Optional[str] = "keep",
-            frozen: Union[bool, Literal["keep"]] = "keep",
-            stream: Union[Iterator[Data], None, Literal["keep"]] = "keep",
-            **fields,
-    ):
+    def replace(self, transformers, truuid=u.UUID.identity, failure="keep", frozen="keep", stream="keep", **fields):
         """Recreate an updated Data object.
 
         Parameters
@@ -137,6 +130,11 @@ class Data(withIdentification, withPrinting):
         Returns
         -------
         New Content object (it keeps references to the old one for performance).
+        :param transformers:
+        :param stream:
+        :param frozen:
+        :param failure:
+        :param truuid:
         """
         if not isinstance(transformers, list):
             transformers = [transformers]
@@ -149,7 +147,7 @@ class Data(withIdentification, withPrinting):
         matrices = self.matrices.copy()
         matrices.update(li.fields2matrices(fields))
 
-        uuid, uuids = li.evolve_id(self.uuid, self.uuids, transformers, matrices)
+        uuid, uuids = li.evolve_id(self.uuid, self.uuids, transformers, matrices, truuid)
 
         # noinspection Mypy
         if self.history is None:
