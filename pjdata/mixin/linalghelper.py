@@ -32,7 +32,7 @@ def _mat2sca(m: ndarray, default: float = None) -> Optional[float]:
     return default if m is None else m[0][0]
 
 
-def field_as_matrix(field_value: "t.Field") -> "t.Field":
+def field_as_matrix(field_value):
     """Given a field, return its corresponding matrix or itself if it is a list."""
 
     # Matrix given directly.
@@ -56,7 +56,7 @@ def field_as_matrix(field_value: "t.Field") -> "t.Field":
     raise Exception("Unknown field type ", type(field_value))
 
 
-def fields2matrices(fields: Dict[str, "t.Field"]) -> Dict[str, "t.Field"]:
+def fields2matrices(fields):
     matrices = {}
     for name, value in fields.items():
         if len(name) == 1:

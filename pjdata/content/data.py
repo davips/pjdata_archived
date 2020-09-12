@@ -68,21 +68,8 @@ class Data(withIdentification, withPrinting):
 
     _Xy = None
 
-    def __init__(
-            self,
-            uuid: u.UUID,
-            uuids: Dict[str, u.UUID],
-            history: h.History,
-            failure: Optional[str],
-            frozen: bool,
-            hollow: bool,
-            stream: Optional[Iterator[Data]],
-            target: str = "s,r",  # Fields precedence when comparing which data is greater.
-            storage_info: str = None,
-            historystr=None,
-            trdata=None,
-            **matrices,
-    ):
+    def __init__(self, uuid, uuids, history, failure, frozen, hollow, stream, target="s,r", storage_info=None, historystr=None, trdata=None, **matrices):
+        # target: Fields precedence when comparing which data is greater.
         if historystr is None:
             historystr = []
         self._jsonable = {"uuid": uuid, "history": history, "uuids": uuids}
@@ -109,7 +96,7 @@ class Data(withIdentification, withPrinting):
     def _jsonable_impl(self):
         return self._jsonable
 
-    def replace(self, transformers, truuid=u.UUID.identity, failure="keep", frozen="keep", stream="keep", **fields):
+    def replace(self, transformers, truuid=u.UUID.identity, failure="keep", frozen="keep", stream="keep", trdata="keep", **fields):
         """Recreate an updated Data object.
 
         Parameters
@@ -130,6 +117,7 @@ class Data(withIdentification, withPrinting):
         Returns
         -------
         New Content object (it keeps references to the old one for performance).
+        :param trdata:
         :param transformers:
         :param stream:
         :param frozen:
@@ -144,6 +132,8 @@ class Data(withIdentification, withPrinting):
             frozen = self.isfrozen
         if stream == "keep":
             stream = self.stream
+        if isinstance(trdata, str):
+            trdata = self.trdata
         matrices = self.matrices.copy()
         matrices.update(li.fields2matrices(fields))
 
@@ -153,7 +143,6 @@ class Data(withIdentification, withPrinting):
         if self.history is None:
             self.history = h.History([])
         return Data(
-            # TODO: optimize history, nesting/tree may be a better choice, to build upon the ref to the previous history
             history=self.history << transformers,
             failure=failure,
             frozen=frozen,
@@ -162,6 +151,7 @@ class Data(withIdentification, withPrinting):
             storage_info=self.storage_info,
             uuid=uuid,
             uuids=uuids,
+            trdata=trdata,
             **matrices,
         )
 
@@ -432,14 +422,14 @@ class Data(withIdentification, withPrinting):
         # return self._name
         raise NotImplementedError("We need to decide if Data has a name")  # <-- TODO
 
-    def __eq__(self, other: t.Data) -> bool:
+    def __eq__(self, other):
         # Checks removed for speed (isinstance is said to be slow...)
         # from pjdata.content.specialdata import NoData
         # if other is not NoData or not isinstance(other, Data):  # TODO: <-- check for other types of Data?
         #     return False
         return self.uuid == other.uuid
 
-    def __hash__(self) -> int:
+    def __hash__(self):
         return hash(self.uuid)
 
     @lru_cache
