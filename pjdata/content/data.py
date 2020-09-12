@@ -68,8 +68,10 @@ class Data(withIdentification, withPrinting):
 
     _Xy = None
 
-    def __init__(self, uuid, uuids, history, failure, frozen, hollow, stream, target="s,r", storage_info=None, historystr=None, trdata=None, **matrices):
+    def __init__(self, uuid=u.UUID.identity, uuids=None, history=h.History([]), failure=None, frozen=False, hollow=False, stream=None, target="s,r", storage_info=None, historystr=None, trdata=None, **matrices):
         # target: Fields precedence when comparing which data is greater.
+        if uuids is None:
+            uuids = {}
         if historystr is None:
             historystr = []
         self._jsonable = {"uuid": uuid, "history": history, "uuids": uuids}
@@ -431,6 +433,9 @@ class Data(withIdentification, withPrinting):
 
     def __hash__(self):
         return hash(self.uuid)
+
+    def __bool__(self):
+        return self.uuid != u.UUID.identity
 
     @lru_cache
     def arff(self, relation, description):
