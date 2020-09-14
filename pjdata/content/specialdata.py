@@ -45,6 +45,7 @@ class NoData(type):
     isfrozen = False
     ishollow = False
     storage_info = None
+    trdata = None
 
     @staticmethod
     def hollow(transformer: tr.Transformer) -> d.Data:
