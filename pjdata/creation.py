@@ -14,6 +14,8 @@ from pjdata.transformer.enhancer import DSStep
 
 
 class FakeStep(DSStep):
+    isnoop = False
+
     def _info_impl(self, data):
         pass
 
@@ -81,7 +83,7 @@ def read_arff(filename):
 
     # Calculate pseudo-unique hash for X and Y, and a pseudo-unique name.
     matrices = {"X": X, "Y": Y, "Xd": Xd, "Yd": Yd, "Xt": Xt, "Yt": Yt}
-    uuids = {k: UUID(pack(v)) for k, v in matrices.items()}   #TODO: mudar hash p/ ficar igual Data.evolve
+    uuids = {k: UUID(pack(v)) for k, v in matrices.items()}  # TODO: mudar hash p/ ficar igual Data.evolve
     original_hashes = {k: v.id for k, v in uuids.items()}
 
     # # old, unique, name...
