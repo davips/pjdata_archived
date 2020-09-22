@@ -21,7 +21,7 @@ class Leaf(withPrinting):
 class History(withPrinting):
     isleaf = False
 
-    def __init__(self, transformers, nested=None):
+    def __init__(self, transformers: List[Union[str, tr.Transformer]], nested=None):
         """Optimized iterable based on structural sharing."""
         self.nested = nested or list(map(Leaf, transformers))
         # if len(self.nested)==0:
@@ -71,7 +71,7 @@ class History(withPrinting):
     def clean(self):
         """Clean version of history. Only the names (of real transformations)."""
         for transformer in self:
-            if not transformer.isnoop:
+            if not transformer.ispholder:
                 yield transformer.name
 
     def __xor__(self, attrname):

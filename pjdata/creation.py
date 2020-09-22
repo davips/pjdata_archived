@@ -14,8 +14,6 @@ from pjdata.transformer.enhancer import DSStep
 
 
 class FakeStep(DSStep):
-    isnoop = False
-
     def _info_impl(self, data):
         pass
 
@@ -83,7 +81,7 @@ def read_arff(filename):
 
     # Calculate pseudo-unique hash for X and Y, and a pseudo-unique name.
     matrices = {"X": X, "Y": Y, "Xd": Xd, "Yd": Yd, "Xt": Xt, "Yt": Yt}
-    uuids = {k: UUID(pack(v)) for k, v in matrices.items()}  # TODO: mudar hash p/ ficar igual Data.evolve
+    uuids = {k: UUID(pack(v)) for k, v in matrices.items()}
     original_hashes = {k: v.id for k, v in uuids.items()}
 
     # # old, unique, name...
@@ -92,7 +90,7 @@ def read_arff(filename):
 
     # Generate the first transformation of a Data object: being born.
     faketransformer = FakeStep(FakeFile(filename, original_hashes))
-    uuid, uuids = li.evolve_id(UUID(), {}, [faketransformer], matrices, UUID.identity)
+    uuid, uuids = li.evolve_id(UUID(), {}, [faketransformer], matrices)
 
     # Create a temporary Data object (i.e. with a fake history).
     data = Data(
@@ -116,7 +114,7 @@ def read_arff(filename):
     transformer = Step(FakeFile(filename, original_hashes))
     data.history = History([transformer])
 
-    return original_hashes, data, name, description, uuids
+    return original_hashes, data, name, description
 
 
 def translate_type(name):

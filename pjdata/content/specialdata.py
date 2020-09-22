@@ -45,7 +45,6 @@ class NoData(type):
     isfrozen = False
     ishollow = False
     storage_info = None
-    trdata = None
 
     @staticmethod
     def hollow(transformer: tr.Transformer) -> d.Data:
@@ -71,7 +70,7 @@ class NoData(type):
             **fields
     ) -> t.Data:
         # noinspection PyCallByClass
-        return d.Data.replace(NoData, transformers, failure, stream, **fields)
+        return d.Data.updated(NoData, transformers, failure, stream, **fields)
 
     def __new__(mcs, *args, **kwargs):
         raise Exception("NoData is a singleton and shouldn't be instantiated")

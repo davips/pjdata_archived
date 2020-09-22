@@ -32,7 +32,7 @@ def _mat2sca(m: ndarray, default: float = None) -> Optional[float]:
     return default if m is None else m[0][0]
 
 
-def field_as_matrix(field_value):
+def field_as_matrix(field_value: "t.Field") -> "t.Field":
     """Given a field, return its corresponding matrix or itself if it is a list."""
 
     # Matrix given directly.
@@ -56,7 +56,7 @@ def field_as_matrix(field_value):
     raise Exception("Unknown field type ", type(field_value))
 
 
-def fields2matrices(fields):
+def fields2matrices(fields: Dict[str, "t.Field"]) -> Dict[str, "t.Field"]:
     matrices = {}
     for name, value in fields.items():
         if len(name) == 1:
@@ -65,13 +65,15 @@ def fields2matrices(fields):
     return matrices
 
 
-def evolve(uuid, transformers, truuid):
+def evolve(uuid: u.UUID, transformers: t.Iterable[tr.Transformer]) -> u.UUID:
     for transformer in transformers:
-        uuid *= transformer.uuid(truuid)  # TODO: toda operaçao de uuid transformadora deve chamar com trdata
+        uuid *= transformer.uuid
     return uuid
 
 
-def evolve_id(uuid, uuids, transformers, matrices, truuid):
+def evolve_id(
+    uuid: u.UUID, uuids: Dict[str, u.UUID], transformers: t.Iterable[tr.Transformer], matrices: Dict[str, "t.Field"],
+) -> Tuple[u.UUID, Dict[str, u.UUID]]:
     """Return UUID/UUIDs after transformations."""
 
     # Update matrix UUIDs.
@@ -100,10 +102,10 @@ def evolve_id(uuid, uuids, transformers, matrices, truuid):
         muuid = uuids.get(name, uuid * u.UUID(bytes(name, "latin1")))  # <-- fallback value
 
         # Transform UUID.
-        muuid = evolve(muuid, transformers, truuid)
+        muuid = evolve(muuid, transformers)
         uuids_[name] = muuid
 
     # Update UUID.
-    uuid = evolve(uuid, transformers, truuid)
+    uuid = evolve(uuid, transformers)
 
     return uuid, uuids_

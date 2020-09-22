@@ -68,10 +68,20 @@ class Data(withIdentification, withPrinting):
 
     _Xy = None
 
-    def __init__(self, uuid=u.UUID.identity, uuids=None, history=h.History([]), failure=None, frozen=False, hollow=False, stream=None, target="s,r", storage_info=None, historystr=None, trdata=None, **matrices):
-        # target: Fields precedence when comparing which data is greater.
-        if uuids is None:
-            uuids = {}
+    def __init__(
+            self,
+            uuid: u.UUID,
+            uuids: Dict[str, u.UUID],
+            history: h.History,
+            failure: Optional[str],
+            frozen: bool,
+            hollow: bool,
+            stream: Optional[Iterator[Data]],
+            target: str = "s,r",  # Fields precedence when comparing which data is greater.
+            storage_info: str = None,
+            historystr=None,
+            **matrices,
+    ):
         if historystr is None:
             historystr = []
         self._jsonable = {"uuid": uuid, "history": history, "uuids": uuids}
@@ -93,12 +103,18 @@ class Data(withIdentification, withPrinting):
         self.matrices = matrices
         self._uuid, self.uuids = uuid, uuids
         self.historystr = historystr
-        self.trdata = trdata
 
     def _jsonable_impl(self):
         return self._jsonable
 
-    def replace(self, transformers, truuid=u.UUID.identity, failure="keep", frozen="keep", stream="keep", trdata="keep", **fields):
+    def updated(
+            self,
+            transformers: List[tr.Transformer],
+            failure: Optional[str] = "keep",
+            frozen: Union[bool, Literal["keep"]] = "keep",
+            stream: Union[Iterator[Data], None, Literal["keep"]] = "keep",
+            **fields,
+    ) -> t.Data:
         """Recreate an updated Data object.
 
         Parameters
@@ -119,32 +135,23 @@ class Data(withIdentification, withPrinting):
         Returns
         -------
         New Content object (it keeps references to the old one for performance).
-        :param trdata:
-        :param transformers:
-        :param stream:
-        :param frozen:
-        :param failure:
-        :param truuid:
         """
-        if not isinstance(transformers, list):
-            transformers = [transformers]
         if failure == "keep":
             failure = self.failure
         if frozen == "keep":
             frozen = self.isfrozen
         if stream == "keep":
             stream = self.stream
-        if isinstance(trdata, str):
-            trdata = self.trdata
         matrices = self.matrices.copy()
         matrices.update(li.fields2matrices(fields))
 
-        uuid, uuids = li.evolve_id(self.uuid, self.uuids, transformers, matrices, truuid)
+        uuid, uuids = li.evolve_id(self.uuid, self.uuids, transformers, matrices)
 
         # noinspection Mypy
         if self.history is None:
             self.history = h.History([])
         return Data(
+            # TODO: optimize history, nesting/tree may be a better choice, to build upon the ref to the previous history
             history=self.history << transformers,
             failure=failure,
             frozen=frozen,
@@ -153,7 +160,6 @@ class Data(withIdentification, withPrinting):
             storage_info=self.storage_info,
             uuid=uuid,
             uuids=uuids,
-            trdata=trdata,
             **matrices,
         )
 
@@ -222,7 +228,7 @@ class Data(withIdentification, withPrinting):
         if self.history is None:
             self.history = h.History([])
         return Data(
-            history=h.History([]),  # TODO: remove IFs history is None?
+            history=h.History([]), #TODO: remove IFs history is None?
             failure=self.failure,
             frozen=self.isfrozen,
             hollow=self.ishollow,
@@ -303,12 +309,12 @@ class Data(withIdentification, withPrinting):
         # data handling depending on the type of content: Data, NoData.
         if self.isfrozen or self.failure:
             transformer = transformer.pholder
-            output_data = self.replace([transformer])  # TODO: check if Pholder here is what we want
+            output_data = self.updated([transformer])  # TODO: check if Pholder here is what we want
             # print(888777777777777777777777)
         else:
             output_data = transformer._transform_impl(self)
             if isinstance(output_data, dict):
-                output_data = self.replace(transformers=[transformer], **output_data)
+                output_data = self.updated(transformers=[transformer], **output_data)
             # print(888777777777777777777777999999999999999999999999)
 
         # TODO: In the future, remove this temporary check. It has a small cost, but is useful while in development:
@@ -330,7 +336,6 @@ class Data(withIdentification, withPrinting):
             raise Exception
         return output_data
 
-    @cached_property
     def Xy(self):
         if self._Xy is None:
             self._Xy = self.field("X"), self.field("y")
@@ -424,18 +429,15 @@ class Data(withIdentification, withPrinting):
         # return self._name
         raise NotImplementedError("We need to decide if Data has a name")  # <-- TODO
 
-    def __eq__(self, other):
+    def __eq__(self, other: t.Data) -> bool:
         # Checks removed for speed (isinstance is said to be slow...)
         # from pjdata.content.specialdata import NoData
         # if other is not NoData or not isinstance(other, Data):  # TODO: <-- check for other types of Data?
         #     return False
         return self.uuid == other.uuid
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.uuid)
-
-    def __bool__(self):
-        return self.uuid != u.UUID.identity
 
     @lru_cache
     def arff(self, relation, description):
