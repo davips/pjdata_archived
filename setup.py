@@ -1,6 +1,6 @@
 import setuptools
 
-import aiuna
+import pjdata
 
 NAME = "aiuna"
 
@@ -56,4 +56,4 @@ setuptools.setup(
     url=URL,
 )
 
-package_dir = {'': 'aiuna'}  # For IDEs like Intellij to recognize the package.
+package_dir = {'': 'pjdata'}  # For IDEs like Intellij to recognize the package.
