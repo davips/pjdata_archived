@@ -7,6 +7,7 @@ from typing import Optional, TYPE_CHECKING, Iterator, Union, Literal, Dict, List
 
 import arff
 
+from pjdata.aux.customjsonencoder import CustomJSONEncoder
 from pjdata.mixin.identification import withIdentification
 from pjdata.mixin.printing import withPrinting
 
@@ -228,7 +229,7 @@ class Data(withIdentification, withPrinting):
         if self.history is None:
             self.history = h.History([])
         return Data(
-            history=h.History([]), #TODO: remove IFs history is None?
+            history=h.History([]),  # TODO: remove IFs history is None?
             failure=self.failure,
             frozen=self.isfrozen,
             hollow=self.ishollow,
@@ -451,14 +452,16 @@ class Data(withIdentification, withPrinting):
         }
         try:
             return arff.dumps(dic)
-        except:
+        except Exception as e:
             traceback.print_exc()
-            print("Problems creating ARFF", self.filename)
-            print("Types:", Xt, Yt)
-            print("Sample:", self.X[0], self.Y[0])
-            print("Expected sizes:", len(Xt), "+", len(Yt))
-            print("Real sizes:", len(self.X[0]), "+", len(self.Y[0].shape))
-            exit(0)
+            dic = {
+                "Problems creating ARFF": relation,
+                "Types:": [Xt, Yt],
+                "Sample:": [self.X[0], self.Y[0]],
+                "Expected sizes:": [len(Xt), len(Yt)],
+                "Real sizes:": [len(self.X[0]), len(self.Y[0].shape)]
+            }
+            raise Exception(json.dumps(dic, cls=CustomJSONEncoder))
 
 
 class MissingField(Exception):
