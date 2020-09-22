@@ -3,23 +3,21 @@ import json
 from abc import abstractmethod
 from functools import cached_property
 
-from pjdata import glconfig
-
 
 def enable_global_pretty_printing():
     """Enable globally the pretty-printing."""
-    glconfig.PRETTY_PRINTING = True
+    PRETTY_PRINTING = True
 
 
 def disable_global_pretty_printing():
     """Disable globally the pretty-printing."""
-    glconfig.PRETTY_PRINTING = False
+    PRETTY_PRINTING = False
 
 
 class withPrinting:
     """Mixin class to deal with string printing style"""
-
-    pretty_printing = glconfig.PRETTY_PRINTING
+    global PRETTY_PRINTING
+    pretty_printing = PRETTY_PRINTING
 
     @cached_property
     def jsonable(self):
