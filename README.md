@@ -1,2 +1,2 @@
-# pjdata [this repository is kept here for historic reasons]
+# pjdata [this repository is kept here only for historic reasons]
 Data elements for machine learning stuff
